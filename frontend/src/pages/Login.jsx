@@ -55,7 +55,7 @@ export default function Login() {
             <Stethoscope className="w-9 h-9 text-blue-700" />
           </div>
           <h1 className="text-3xl font-bold text-white">DMS TRESVANCE</h1>
-          <p className="text-blue-200 mt-1 text-sm">Dental Clinic Management System</p>
+          {/* <p className="text-blue-200 mt-1 text-sm">Dental Clinic Management System</p> */}
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">

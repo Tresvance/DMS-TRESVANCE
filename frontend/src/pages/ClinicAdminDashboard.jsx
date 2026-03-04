@@ -42,8 +42,8 @@ export default function ClinicAdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <Link to="/clinic/staff"   className="p-3 rounded-xl text-sm font-medium text-center bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">+ Add Staff</Link>
-        <Link to="/patients/new"   className="p-3 rounded-xl text-sm font-medium text-center bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">+ New Patient</Link>
+        <Link to="/clinic/staff"   className="p-3 rounded-xl text-sm font-medium text-center bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"> Add Staff</Link>
+        <Link to="/patients/new"   className="p-3 rounded-xl text-sm font-medium text-center bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"> New Patient</Link>
         <Link to="/appointments"   className="p-3 rounded-xl text-sm font-medium text-center bg-green-50 text-green-700 hover:bg-green-100 transition-colors">Appointments</Link>
         <Link to="/billing"        className="p-3 rounded-xl text-sm font-medium text-center bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors">Billing</Link>
       </div>
