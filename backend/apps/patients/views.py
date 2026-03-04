@@ -33,7 +33,15 @@ class PatientViewSet(viewsets.ModelViewSet):
             return PatientListSerializer
         return PatientSerializer
 
+    # def perform_create(self, serializer):
+    #     user = self.request.user
+    #     clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
+    #     serializer.save(clinic=clinic)
+
+
     def perform_create(self, serializer):
         user = self.request.user
-        clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
-        serializer.save(clinic=clinic)
+        if user.role in ['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION']:
+            serializer.save(clinic=user.clinic)
+        else:
+            serializer.save()

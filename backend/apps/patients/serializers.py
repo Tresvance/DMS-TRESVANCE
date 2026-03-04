@@ -16,7 +16,7 @@ class PatientSerializer(serializers.ModelSerializer):
             'emergency_contact_name', 'emergency_contact_phone',
             'is_active', 'created_at'
         ]
-        read_only_fields = ['id', 'patient_id', 'created_at']
+        read_only_fields = ['id', 'patient_id', 'created_at','clinic']
 
     def get_full_name(self, obj):
         return obj.get_full_name()

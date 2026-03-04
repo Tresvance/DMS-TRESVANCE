@@ -28,7 +28,7 @@ export default function Users() {
     : 'Staff Management';
 
   const addLabel = isSuperAdmin
-    ? isAgentsPage ? '+ Add Support Agent' : '+ Add Clinic Admin'
+    ? isAgentsPage ? ' Add Support Agent' : '+ Add Clinic Admin'
     : '+ Add Staff';
 
   const INITIAL = {
