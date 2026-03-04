@@ -38,7 +38,7 @@ class ClinicSerializer(serializers.ModelSerializer):
         # Check subdomain uniqueness on update
         clinic_code = attrs.get('clinic_code', '')
         if clinic_code:
-            subdomain = f'{clinic_code}.tresvancehost.com'
+            subdomain = f'{clinic_code}.tresvance.com'
             qs = Clinic.objects.filter(subdomain=subdomain)
             if self.instance:
                 qs = qs.exclude(pk=self.instance.pk)

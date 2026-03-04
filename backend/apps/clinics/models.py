@@ -23,7 +23,7 @@ class Clinic(models.Model):
     clinic_code         = models.CharField(max_length=20, unique=True, blank=True,
                             help_text='Short code used for subdomain e.g. LAK')
     subdomain           = models.CharField(max_length=100, unique=True, blank=True,
-                            help_text='Full subdomain e.g. lak.tresvancehost.com')
+                            help_text='Full subdomain e.g. lak.tresvance.com')
     registration_number = models.CharField(max_length=100, unique=True)
     address             = models.TextField()
     phone               = models.CharField(max_length=20)
@@ -57,7 +57,7 @@ class Clinic(models.Model):
             self.clinic_code = code
 
         # Always sync subdomain from clinic_code
-        self.subdomain = f'{self.clinic_code}.tresvancehost.com'
+        self.subdomain = f'{self.clinic_code}.tresvance.com'
         super().save(*args, **kwargs)
 
     def __str__(self):

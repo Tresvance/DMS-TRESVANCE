@@ -115,7 +115,7 @@ export default function Clinics() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const previewSubdomain = form.clinic_code ? `${form.clinic_code}.tresvancehost.com` : '';
+  const previewSubdomain = form.clinic_code ? `${form.clinic_code}.tresvance.com` : '';
 
   return (
     <div>
@@ -210,7 +210,7 @@ export default function Clinics() {
                   maxLength={20}
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">
-                  .tresvancehost.com
+                  .tresvance.com
                 </span>
               </div>
             </FormField>
