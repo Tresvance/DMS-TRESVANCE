@@ -21,10 +21,11 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
-        SUPER_ADMIN  = 'SUPER_ADMIN',  'Super Admin (Tresvance)'
-        CLINIC_ADMIN = 'CLINIC_ADMIN', 'Clinic Admin'
-        DOCTOR       = 'DOCTOR',       'Doctor'
-        RECEPTION    = 'RECEPTION',    'Receptionist'
+        SUPER_ADMIN   = 'SUPER_ADMIN',   'Super Admin (Tresvance)'
+        SUPPORT_AGENT = 'SUPPORT_AGENT', 'Support Agent (Tresvance)'
+        CLINIC_ADMIN  = 'CLINIC_ADMIN',  'Clinic Admin'
+        DOCTOR        = 'DOCTOR',        'Doctor'
+        RECEPTION     = 'RECEPTION',     'Receptionist'
 
     first_name = models.CharField(max_length=100)
     last_name  = models.CharField(max_length=100)
@@ -63,6 +64,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_super_admin(self):
         return self.role == self.Role.SUPER_ADMIN
+
+    @property
+    def is_support_agent(self):
+        return self.role == self.Role.SUPPORT_AGENT
 
     @property
     def is_clinic_admin(self):

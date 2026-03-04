@@ -48,13 +48,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+
         if user.role == 'SUPER_ADMIN':
-            # Sees all users except other super admins
             return User.objects.exclude(role='SUPER_ADMIN').select_related('clinic')
-        # Clinic Admin sees only their clinic's staff
-        return User.objects.filter(
-            clinic=user.clinic
-        ).exclude(role='SUPER_ADMIN').select_related('clinic')
+
+        # SUPPORT_AGENT has no clinic — return empty queryset
+        if user.role == 'SUPPORT_AGENT':
+            return User.objects.none()
+
+        # Clinic staff — only see their own clinic users
+        if user.clinic:
+            return User.objects.filter(
+                clinic=user.clinic
+            ).exclude(role__in=['SUPER_ADMIN', 'SUPPORT_AGENT']).select_related('clinic')
+
+        return User.objects.none()
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -98,14 +106,27 @@ class DashboardView(generics.GenericAPIView):
 
         if user.role == 'SUPER_ADMIN':
             data = {
-                'total_clinics':      Clinic.objects.count(),
+                'total_clinics':       Clinic.objects.count(),
                 'total_clinic_admins': User.objects.filter(role='CLINIC_ADMIN').count(),
-                'total_doctors':      User.objects.filter(role='DOCTOR').count(),
-                'total_staff':        User.objects.filter(role__in=['CLINIC_ADMIN','DOCTOR','RECEPTION']).count(),
-                'total_patients':     Patient.objects.count(),
-                'total_revenue':      Billing.objects.aggregate(t=Sum('paid_amount'))['t'] or 0,
-                'pending_balance':    Billing.objects.aggregate(t=Sum('balance'))['t'] or 0,
-                'appointments_today': Appointment.objects.filter(appointment_date=today).count(),
+                'total_doctors':       User.objects.filter(role='DOCTOR').count(),
+                'total_staff':         User.objects.filter(role__in=['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION']).count(),
+                'total_patients':      Patient.objects.count(),
+                'total_revenue':       Billing.objects.aggregate(t=Sum('paid_amount'))['t'] or 0,
+                'pending_balance':     Billing.objects.aggregate(t=Sum('balance'))['t'] or 0,
+                'appointments_today':  Appointment.objects.filter(appointment_date=today).count(),
+            }
+
+        elif user.role == 'SUPPORT_AGENT':
+            from apps.support.models import Ticket
+            assigned = Ticket.objects.filter(assigned_to=user)
+            data = {
+                'total_assigned': assigned.count(),
+                'open':           assigned.filter(status='Open').count(),
+                'in_progress':    assigned.filter(status='In Progress').count(),
+                'waiting':        assigned.filter(status='Waiting').count(),
+                'resolved':       assigned.filter(status='Resolved').count(),
+                'closed':         assigned.filter(status='Closed').count(),
+                'critical':       assigned.filter(priority='Critical').count(),
             }
 
         elif user.role == 'CLINIC_ADMIN':
@@ -136,11 +157,11 @@ class DashboardView(generics.GenericAPIView):
         elif user.role == 'RECEPTION':
             clinic = user.clinic
             data = {
-                'appointments_today':  Appointment.objects.filter(clinic=clinic, appointment_date=today).count(),
-                'total_patients':      Patient.objects.filter(clinic=clinic).count(),
-                'new_patients_today':  Patient.objects.filter(clinic=clinic, created_at__date=today).count(),
-                'billing_today':       Billing.objects.filter(clinic=clinic, invoice_date=today).aggregate(t=Sum('paid_amount'))['t'] or 0,
-                'pending_bills':       Billing.objects.filter(clinic=clinic, status='Pending').count(),
+                'appointments_today': Appointment.objects.filter(clinic=clinic, appointment_date=today).count(),
+                'total_patients':     Patient.objects.filter(clinic=clinic).count(),
+                'new_patients_today': Patient.objects.filter(clinic=clinic, created_at__date=today).count(),
+                'billing_today':      Billing.objects.filter(clinic=clinic, invoice_date=today).aggregate(t=Sum('paid_amount'))['t'] or 0,
+                'pending_bills':      Billing.objects.filter(clinic=clinic, status='Pending').count(),
             }
 
         return Response(data)

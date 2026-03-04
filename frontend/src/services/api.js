@@ -121,3 +121,24 @@ export const billingAPI = {
 };
 
 export default api;
+
+// ── Support / Tickets ─────────────────────────────
+export const supportAPI = {
+  // Tickets
+  listTickets:     (params) => api.get('/support/tickets/', { params }),
+  getTicket:       (id)     => api.get(`/support/tickets/${id}/`),
+  createTicket:    (data)   => api.post('/support/tickets/', data),
+  updateTicket:    (id, data) => api.patch(`/support/tickets/${id}/`, data),
+  deleteTicket:    (id)     => api.delete(`/support/tickets/${id}/`),
+  // Actions
+  addComment:      (id, data) => api.post(`/support/tickets/${id}/comment/`, data),
+  updateStatus:    (id, data) => api.patch(`/support/tickets/${id}/status/`, data),
+  assignTicket:    (id, data) => api.patch(`/support/tickets/${id}/assign/`, data),
+  uploadAttachment:(id, form) => api.post(`/support/tickets/${id}/attach/`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  // Dashboard
+  ticketDashboard: () => api.get('/support/tickets/dashboard/'),
+  // Agents
+  listAgents:      () => api.get('/support/agents/'),
+};

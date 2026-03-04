@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usersAPI, clinicsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
@@ -7,16 +8,28 @@ import toast from 'react-hot-toast';
 
 export default function Users() {
   const { user: me } = useAuth();
+  const location = useLocation();
   const isSuperAdmin  = me?.role === 'SUPER_ADMIN';
   const isClinicAdmin = me?.role === 'CLINIC_ADMIN';
+  const isAgentsPage  = location.pathname.includes('agents');
 
-  // Super Admin creates CLINIC_ADMIN | Clinic Admin creates DOCTOR/RECEPTION
+  // Determine roles this user can create based on page context
   const allowedRoles = isSuperAdmin
-    ? [{ value: 'CLINIC_ADMIN', label: 'Clinic Admin' }]
+    ? isAgentsPage
+      ? [{ value: 'SUPPORT_AGENT', label: 'Support Agent' }]
+      : [{ value: 'CLINIC_ADMIN',  label: 'Clinic Admin' }]
     : [
         { value: 'DOCTOR',    label: 'Doctor' },
         { value: 'RECEPTION', label: 'Receptionist' },
       ];
+
+  const pageTitle = isSuperAdmin
+    ? isAgentsPage ? 'Support Agents' : 'Clinic Admins'
+    : 'Staff Management';
+
+  const addLabel = isSuperAdmin
+    ? isAgentsPage ? '+ Add Support Agent' : '+ Add Clinic Admin'
+    : '+ Add Staff';
 
   const INITIAL = {
     first_name: '', last_name: '', email: '', phone: '',
@@ -37,24 +50,21 @@ export default function Users() {
 
   const fc = (f) => (e) => setForm(v => ({ ...v, [f]: e.target.value }));
 
-  const pageTitle = isSuperAdmin ? 'Clinic Admins' : 'Staff Management';
-  const addLabel  = isSuperAdmin ? '+ Add Clinic Admin' : '+ Add Staff';
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = isSuperAdmin
-        ? { role: 'CLINIC_ADMIN', search }
+      const roleFilter = isSuperAdmin
+        ? isAgentsPage ? { role: 'SUPPORT_AGENT', search } : { role: 'CLINIC_ADMIN', search }
         : { search };
       const [uRes, cRes] = await Promise.all([
-        usersAPI.list(params),
-        isSuperAdmin ? clinicsAPI.list() : Promise.resolve({ data: [] }),
+        usersAPI.list(roleFilter),
+        isSuperAdmin && !isAgentsPage ? clinicsAPI.list() : Promise.resolve({ data: [] }),
       ]);
       setUsers(uRes.data.results || uRes.data);
       setClinics(cRes.data.results || cRes.data || []);
     } catch { toast.error('Failed to load'); }
     finally { setLoading(false); }
-  }, [search, isSuperAdmin]);
+  }, [search, isSuperAdmin, isAgentsPage]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -99,10 +109,11 @@ export default function Users() {
   };
 
   const badgeColor = (role) => ({
-    SUPER_ADMIN:  'bg-red-100 text-red-700',
-    CLINIC_ADMIN: 'bg-purple-100 text-purple-700',
-    DOCTOR:       'bg-green-100 text-green-700',
-    RECEPTION:    'bg-blue-100 text-blue-700',
+    SUPER_ADMIN:   'bg-red-100 text-red-700',
+    SUPPORT_AGENT: 'bg-yellow-100 text-yellow-700',
+    CLINIC_ADMIN:  'bg-purple-100 text-purple-700',
+    DOCTOR:        'bg-green-100 text-green-700',
+    RECEPTION:     'bg-blue-100 text-blue-700',
   }[role] || 'bg-gray-100 text-gray-700');
 
   return (
@@ -119,7 +130,7 @@ export default function Users() {
               <tr key={u.id} className="hover:bg-gray-50">
                 <td className="table-cell font-medium">{u.full_name}</td>
                 <td className="table-cell text-gray-500">{u.email}</td>
-                <td className="table-cell"><span className={`badge ${badgeColor(u.role)}`}>{u.role.replace('_', ' ')}</span></td>
+                <td className="table-cell"><span className={`badge ${badgeColor(u.role)}`}>{u.role.replace(/_/g, ' ')}</span></td>
                 <td className="table-cell">{u.clinic_name || '—'}</td>
                 <td className="table-cell">{u.phone || '—'}</td>
                 <td className="table-cell">{u.is_active ? <span className="badge-green">Active</span> : <span className="badge-gray">Inactive</span>}</td>
@@ -136,7 +147,7 @@ export default function Users() {
       </div>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
-        title={editId ? 'Edit User' : (isSuperAdmin ? 'Add Clinic Admin' : 'Add Staff')}>
+        title={editId ? 'Edit User' : addLabel.replace('+ ', '')}>
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <FormField label="First Name" required><input value={form.first_name} onChange={fc('first_name')} className="input-field" /></FormField>
@@ -150,8 +161,8 @@ export default function Users() {
               </select>
             </FormField>
 
-            {/* Super Admin assigns a clinic to the Clinic Admin */}
-            {isSuperAdmin && (
+            {/* Clinic assignment - only for Clinic Admin creation */}
+            {isSuperAdmin && !isAgentsPage && (
               <FormField label="Assign Clinic" required>
                 <select value={form.clinic} onChange={fc('clinic')} className="input-field">
                   <option value="">Select clinic</option>

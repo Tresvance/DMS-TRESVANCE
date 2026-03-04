@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, Building2, UserPlus, Calendar,
   FileText, Pill, CreditCard, LogOut, Menu, X,
-  Stethoscope, ChevronDown, ShieldCheck
+  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -13,36 +13,51 @@ const navConfig = {
     { to: '/super/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/super/clinics',        icon: Building2,       label: 'Clinics' },
     { to: '/super/clinic-admins',  icon: ShieldCheck,     label: 'Clinic Admins' },
+    { to: '/super/agents',         icon: HeadphonesIcon,  label: 'Support Agents' },
+    { divider: true },
+    { to: '/support/dashboard',    icon: LayoutDashboard, label: 'Support Dashboard' },
+    { to: '/support/tickets',      icon: Ticket,          label: 'All Tickets' },
+  ],
+  SUPPORT_AGENT: [
+    { to: '/support/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/support/tickets',      icon: Ticket,          label: 'My Tickets' },
   ],
   CLINIC_ADMIN: [
-    { to: '/clinic/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/clinic/staff',     icon: Users,           label: 'Staff' },
-    { to: '/patients',         icon: UserPlus,        label: 'Patients' },
-    { to: '/appointments',     icon: Calendar,        label: 'Appointments' },
-    { to: '/records',          icon: FileText,        label: 'Records' },
-    { to: '/medicines',        icon: Pill,            label: 'Medicines' },
-    { to: '/billing',          icon: CreditCard,      label: 'Billing' },
+    { to: '/clinic/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/clinic/staff',         icon: Users,           label: 'Staff' },
+    { to: '/patients',             icon: UserPlus,        label: 'Patients' },
+    { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
+    { to: '/records',              icon: FileText,        label: 'Records' },
+    { to: '/medicines',            icon: Pill,            label: 'Medicines' },
+    { to: '/billing',              icon: CreditCard,      label: 'Billing' },
+    { divider: true },
+    { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],
   DOCTOR: [
-    { to: '/doctor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/patients',         icon: UserPlus,        label: 'Patients' },
-    { to: '/appointments',     icon: Calendar,        label: 'Appointments' },
-    { to: '/records',          icon: FileText,        label: 'Records' },
-    { to: '/medicines',        icon: Pill,            label: 'Medicines' },
+    { to: '/doctor/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/patients',             icon: UserPlus,        label: 'Patients' },
+    { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
+    { to: '/records',              icon: FileText,        label: 'Records' },
+    { to: '/medicines',            icon: Pill,            label: 'Medicines' },
+    { divider: true },
+    { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],
   RECEPTION: [
-    { to: '/reception/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/patients',            icon: UserPlus,        label: 'Patients' },
-    { to: '/appointments',        icon: Calendar,        label: 'Appointments' },
-    { to: '/billing',             icon: CreditCard,      label: 'Billing' },
+    { to: '/reception/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/patients',             icon: UserPlus,        label: 'Patients' },
+    { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
+    { to: '/billing',              icon: CreditCard,      label: 'Billing' },
+    { divider: true },
+    { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],
 };
 
 const roleLabels = {
-  SUPER_ADMIN:  { label: 'Super Admin',   color: 'bg-red-100 text-red-700' },
-  CLINIC_ADMIN: { label: 'Clinic Admin',  color: 'bg-purple-100 text-purple-700' },
-  DOCTOR:       { label: 'Doctor',        color: 'bg-green-100 text-green-700' },
-  RECEPTION:    { label: 'Receptionist',  color: 'bg-blue-100 text-blue-700' },
+  SUPER_ADMIN:   { label: 'Super Admin',    color: 'bg-red-100 text-red-700' },
+  SUPPORT_AGENT: { label: 'Support Agent',  color: 'bg-yellow-100 text-yellow-700' },
+  CLINIC_ADMIN:  { label: 'Clinic Admin',   color: 'bg-purple-100 text-purple-700' },
+  DOCTOR:        { label: 'Doctor',         color: 'bg-green-100 text-green-700' },
+  RECEPTION:     { label: 'Receptionist',   color: 'bg-blue-100 text-blue-700' },
 };
 
 export default function Layout() {
@@ -51,8 +66,8 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const navItems  = navConfig[user?.role] || [];
-  const roleInfo  = roleLabels[user?.role] || { label: user?.role, color: 'bg-gray-100 text-gray-700' };
+  const navItems = navConfig[user?.role] || [];
+  const roleInfo = roleLabels[user?.role] || { label: user?.role, color: 'bg-gray-100 text-gray-700' };
 
   const handleLogout = async () => {
     await logout();
@@ -77,17 +92,23 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors mb-0.5
-                ${isActive ? 'bg-white/20 text-white' : 'text-blue-200 hover:bg-white/10 hover:text-white'}`
-              }
-            >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span>{label}</span>}
-            </NavLink>
-          ))}
+          {navItems.map((item, idx) => {
+            if (item.divider) return (
+              <div key={idx} className="mx-4 my-2 border-t border-blue-700 opacity-50" />
+            );
+            const { to, icon: Icon, label } = item;
+            return (
+              <NavLink key={to} to={to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors mb-0.5
+                  ${isActive ? 'bg-white/20 text-white' : 'text-blue-200 hover:bg-white/10 hover:text-white'}`
+                }
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {sidebarOpen && <span>{label}</span>}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {sidebarOpen && (
@@ -124,6 +145,11 @@ export default function Layout() {
             {user?.role === 'SUPER_ADMIN' && (
               <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded-full font-medium">
                 Tresvance HQ
+              </span>
+            )}
+            {user?.role === 'SUPPORT_AGENT' && (
+              <span className="text-xs bg-yellow-50 text-yellow-600 border border-yellow-200 px-2 py-1 rounded-full font-medium">
+                Support Team
               </span>
             )}
             <div className="relative">

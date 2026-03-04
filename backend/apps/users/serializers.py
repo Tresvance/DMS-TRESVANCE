@@ -60,10 +60,12 @@ class UserSerializer(serializers.ModelSerializer):
             if clinic and clinic != request.user.clinic:
                 raise serializers.ValidationError(
                     'You can only create users for your own clinic.')
+        # Super Admin can create CLINIC_ADMIN, SUPPORT_AGENT, DOCTOR, RECEPTION
         if request.user.role == 'SUPER_ADMIN':
             if role == 'SUPER_ADMIN':
                 raise serializers.ValidationError(
-                    'Cannot create another Super Admin via API.')
+                    'Cannot create another Super Admin via API.'
+                )
         return attrs
 
     def create(self, validated_data):
@@ -88,15 +90,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
+    full_name   = serializers.SerializerMethodField()
+    clinic_name = serializers.SerializerMethodField()
 
     class Meta:
         model        = User
-        fields       = ['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'role', 'clinic']
+        fields       = ['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'role', 'clinic', 'clinic_name']
         read_only_fields = ['id', 'email', 'role', 'clinic']
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+    def get_clinic_name(self, obj):
+        return obj.clinic.clinic_name if obj.clinic else None
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -108,3 +114,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError('Old password is incorrect.')
         return value
+
+
+# Re-apply clinic check separately (keeps logic clean)
+# Clinic Admin can only create for their own clinic
