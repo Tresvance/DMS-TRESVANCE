@@ -54,7 +54,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
             <Stethoscope className="w-9 h-9 text-blue-700" />
           </div>
-          <h1 className="text-3xl font-bold text-white">DMS-TRESVANCE</h1>
+          <h1 className="text-3xl font-bold text-white">DMS TRESVANCE</h1>
           <p className="text-blue-200 mt-1 text-sm">Dental Clinic Management System</p>
         </div>
 

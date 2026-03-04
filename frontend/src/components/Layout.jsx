@@ -85,7 +85,7 @@ export default function Layout() {
           </div>
           {sidebarOpen && (
             <div>
-              <div className="font-bold text-sm">DMS-TRESVANCE</div>
+              <div className="font-bold text-sm">DMS TRESVANCE</div>
               <div className="text-xs text-blue-300">Dental Management</div>
             </div>
           )}
