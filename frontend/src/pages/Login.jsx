@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { clinicAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { Stethoscope, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Stethoscope, Eye, EyeOff, Loader2, Building2 } from 'lucide-react';
 
 const ROLE_REDIRECT = {
   SUPER_ADMIN:  '/super/dashboard',
@@ -11,13 +12,59 @@ const ROLE_REDIRECT = {
   RECEPTION:    '/reception/dashboard',
 };
 
+// Extract subdomain from current URL
+function getSubdomain() {
+  const host = window.location.hostname;
+  // Skip for localhost/IP
+  if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    return null;
+  }
+  // Check if it's a subdomain of tresvance.com
+  const match = host.match(/^([a-z0-9-]+)\.tresvance\.com$/i);
+  if (match) {
+    const sub = match[1].toLowerCase();
+    // Skip reserved subdomains
+    if (['www', 'api', 'admin', 'dmsdental', 'mail', 'ftp'].includes(sub)) {
+      return null;
+    }
+    return sub;
+  }
+  return null;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm]       = useState({ email: '', password: '' });
+  const [form, setForm]         = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading]  = useState(false);
-  const [errors, setErrors]    = useState({});
+  const [loading, setLoading]   = useState(false);
+  const [errors, setErrors]     = useState({});
+  
+  // Clinic subdomain detection
+  const [subdomain, setSubdomain]     = useState(null);
+  const [clinic, setClinic]           = useState(null);
+  const [clinicLoading, setClinicLoading] = useState(true);
+  const [clinicError, setClinicError] = useState(null);
+
+  useEffect(() => {
+    const sub = getSubdomain();
+    setSubdomain(sub);
+    
+    if (sub) {
+      // Fetch clinic info
+      clinicAPI.getBySubdomain(sub)
+        .then(res => {
+          setClinic(res.data);
+          setClinicLoading(false);
+        })
+        .catch(err => {
+          setClinicError(err.response?.data?.error || 'Clinic not found');
+          setClinicLoading(false);
+        });
+    } else {
+      setClinicLoading(false);
+    }
+  }, []);
 
   const handleChange = (e) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -47,15 +94,44 @@ export default function Login() {
     }
   };
 
+  // Show clinic not found error
+  if (subdomain && clinicError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-700 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+          <Building2 className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Clinic Not Found</h1>
+          <p className="text-gray-600 mb-4">
+            No clinic is registered for <strong>{subdomain}.tresvance.com</strong>
+          </p>
+          <a href="https://dmsdental.tresvance.com" 
+             className="btn-primary inline-block px-6 py-2">
+            Go to Main Portal
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-            <Stethoscope className="w-9 h-9 text-blue-700" />
+            {clinic ? (
+              <Building2 className="w-9 h-9 text-blue-700" />
+            ) : (
+              <Stethoscope className="w-9 h-9 text-blue-700" />
+            )}
           </div>
-          <h1 className="text-3xl font-bold text-white">DMS TRESVANCE</h1>
-          {/* <p className="text-blue-200 mt-1 text-sm">Dental Clinic Management System</p> */}
+          {clinic ? (
+            <>
+              <h1 className="text-3xl font-bold text-white">{clinic.clinic_name}</h1>
+              <p className="text-blue-200 mt-1 text-sm">Staff Login Portal</p>
+            </>
+          ) : (
+            <h1 className="text-3xl font-bold text-white">DMS TRESVANCE</h1>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">

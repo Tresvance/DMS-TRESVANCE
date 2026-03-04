@@ -2,6 +2,13 @@ from rest_framework import serializers
 from .models import Clinic
 
 
+class ClinicPublicSerializer(serializers.ModelSerializer):
+    """Public serializer for login page - limited fields"""
+    class Meta:
+        model = Clinic
+        fields = ['id', 'clinic_name', 'clinic_code', 'subdomain']
+
+
 class ClinicSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     staff_count     = serializers.SerializerMethodField()

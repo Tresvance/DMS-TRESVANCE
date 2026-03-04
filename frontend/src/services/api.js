@@ -70,6 +70,11 @@ export const clinicsAPI = {
   delete: (id) => api.delete(`/clinics/${id}/`),
 };
 
+// ── Clinic (public) ───────────────────────────────────
+export const clinicAPI = {
+  getBySubdomain: (subdomain) => api.get('/clinics/info/', { params: { subdomain } }),
+};
+
 // ── Patients ──────────────────────────────────────────
 export const patientsAPI = {
   list: (params) => api.get('/patients/', { params }),

@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dms_backend_prod
+    restart: always
+    environment:
+      - SECRET_KEY=django-insecure-prod-change-later
+      - DEBUG=False
+      - ALLOWED_HOSTS=tresvance.com,.tresvance.com,localhost,127.0.0.1
+      - CORS_ALLOW_ALL=True
+      - USE_SQLITE=True
+    ports:
+      - "4000:8000"
+    volumes:
+      - dms_data:/app/data
+    command: >
+      sh -c "pip install gunicorn &&
+             mkdir -p /app/data &&
+             python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn dms_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: /api
+    container_name: dms_frontend_prod
+    restart: always
+    ports:
+      - "4001:80"
+    depends_on:
+      - backend
+
+volumes:
+  dms_data:

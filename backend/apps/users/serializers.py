@@ -16,6 +16,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         user = self.user
+        
+        # Check if login is from a clinic subdomain
+        request = self.context.get('request')
+        if request and hasattr(request, 'clinic') and request.clinic:
+            # Subdomain login - user must belong to this clinic
+            if user.role == 'SUPER_ADMIN':
+                # Super admins can login from anywhere
+                pass
+            elif user.clinic_id != request.clinic.id:
+                raise serializers.ValidationError(
+                    {'detail': 'You do not have access to this clinic.'}
+                )
+        
         data['user'] = {
             'id':          user.id,
             'email':       user.email,
@@ -24,6 +37,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'clinic_id':   user.clinic_id,
             'clinic_name': user.clinic.clinic_name if user.clinic else None,
         }
+        
+        # Include clinic info from subdomain if available
+        if request and hasattr(request, 'clinic') and request.clinic:
+            data['clinic'] = {
+                'id': request.clinic.id,
+                'name': request.clinic.clinic_name,
+                'subdomain': request.clinic.subdomain,
+            }
+        
         return data
 
 
