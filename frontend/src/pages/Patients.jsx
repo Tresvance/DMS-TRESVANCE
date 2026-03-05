@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { patientsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, SearchBar, Table, Spinner, EmptyState, ConfirmDialog, StatusBadge } from '../components/UI';
-import { UserPlus, Edit2, Trash2, Eye, Users } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Eye, Users, FileImage } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Patients() {
@@ -73,6 +73,9 @@ export default function Patients() {
                 </td>
                 <td className="table-cell">
                   <div className="flex items-center gap-2">
+                    <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title="Documents">
+                      <FileImage className="w-4 h-4" />
+                    </Link>
                     {canEdit && (
                       <Link to={`/patients/${p.id}/edit`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
                         <Edit2 className="w-4 h-4" />

@@ -85,6 +85,19 @@ export const patientsAPI = {
   delete: (id) => api.delete(`/patients/${id}/`),
 };
 
+// ── Patient Documents (X-rays, Scans, Reports) ────────
+export const patientDocumentsAPI = {
+  list: (params) => api.get('/patients/documents/', { params }),
+  get: (id) => api.get(`/patients/documents/${id}/`),
+  getTypes: () => api.get('/patients/documents/types/'),
+  upload: (data) => api.post('/patients/documents/', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete: (id) => api.delete(`/patients/documents/${id}/`),
+  // Get documents for specific patient
+  listByPatient: (patientId) => api.get('/patients/documents/', { params: { patient: patientId } }),
+};
+
 // ── Appointments ──────────────────────────────────────
 export const appointmentsAPI = {
   list: (params) => api.get('/appointments/', { params }),

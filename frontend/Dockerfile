@@ -9,6 +9,9 @@ RUN npm install
 # Copy project
 COPY . .
 
+# Set backend URL for Docker environment
+ENV VITE_BACKEND_URL=http://backend:8000
+
 # Expose port
 EXPOSE 5173
 

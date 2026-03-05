@@ -9,6 +9,7 @@ import DoctorDashboard      from './pages/DoctorDashboard';
 import ReceptionDashboard   from './pages/ReceptionDashboard';
 import Patients             from './pages/Patients';
 import AddPatient           from './pages/AddPatient';
+import PatientDocuments     from './pages/PatientDocuments';
 import Appointments         from './pages/Appointments';
 import Records              from './pages/Records';
 import Medicines            from './pages/Medicines';
@@ -80,10 +81,11 @@ function AppRoutes() {
         <Route path="support/tickets/:id"    element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
 
         {/* ── Shared Clinical ─────────────────────────── */}
-        <Route path="patients"           element={<ProtectedRoute><Patients /></ProtectedRoute>} />
-        <Route path="patients/new"       element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
-        <Route path="patients/:id/edit"  element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
-        <Route path="appointments"       element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
+        <Route path="patients"              element={<ProtectedRoute><Patients /></ProtectedRoute>} />
+        <Route path="patients/new"          element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
+        <Route path="patients/:id/edit"     element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
+        <Route path="patients/:id/documents" element={<ProtectedRoute><PatientDocuments /></ProtectedRoute>} />
+        <Route path="appointments"          element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
         <Route path="records"            element={<ProtectedRoute><Records /></ProtectedRoute>} />
         <Route path="medicines"          element={<ProtectedRoute><Medicines /></ProtectedRoute>} />
         <Route path="billing"            element={<ProtectedRoute><Billing /></ProtectedRoute>} />
