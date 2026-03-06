@@ -75,15 +75,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'dms_project.wsgi.application'
 
-# Database configuration - supports SQLite for production simplicity
+# Database configuration
+# Development: USE_SQLITE=True (SQLite)
+# Production:  USE_SQLITE=False (MySQL)
 if os.environ.get('USE_SQLITE') == 'True':
+    # SQLite for development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/app/data/db.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',  # Local file in development
         }
     }
 else:
+    # MySQL for production
     DATABASES = {
         'default': {
             'ENGINE':   'django.db.backends.mysql',

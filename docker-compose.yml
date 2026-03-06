@@ -9,6 +9,8 @@ services:
     restart: always
     env_file:
       - ./backend/.env
+    environment:
+      - USE_SQLITE=True
     ports:
       - "8000:8000"
     volumes:
