@@ -180,8 +180,3 @@ CORS_ALLOW_CREDENTIALS = True
 RAZORPAY_KEY_ID     = os.environ.get('RAZORPAY_KEY_ID',     'rzp_test_SNrglQGkhEr1dI')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'h0gSRoU7jLQJBLoQ9Uq31kRp')
 
-# -- Admin Branding ------------------------------------------------------------
-from django.contrib import admin as _admin  # noqa: E402
-_admin.site.site_header = 'DMS-TRESVANCE Administration'
-_admin.site.site_title  = 'DMS-TRESVANCE Admin'
-_admin.site.index_title =  'Tresvance  Dental Management System'
