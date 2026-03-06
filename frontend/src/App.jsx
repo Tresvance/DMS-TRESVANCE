@@ -20,6 +20,7 @@ import Tickets              from './pages/Tickets';
 import NewTicket            from './pages/NewTicket';
 import TicketDetail         from './pages/TicketDetail';
 import SupportDashboard     from './pages/SupportDashboard';
+import PaymentHistory       from './pages/PaymentHistory';
 import Layout               from './components/Layout';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -61,10 +62,12 @@ function AppRoutes() {
         <Route path="super/clinics"       element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Clinics /></ProtectedRoute>} />
         <Route path="super/clinic-admins" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Users /></ProtectedRoute>} />
         <Route path="super/agents"        element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Users /></ProtectedRoute>} />
+        <Route path="super/payments"      element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
 
         {/* ── Clinic Admin ────────────────────────────── */}
         <Route path="clinic/dashboard" element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><ClinicAdminDashboard /></ProtectedRoute>} />
         <Route path="clinic/staff"     element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><Users /></ProtectedRoute>} />
+        <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
 
         {/* ── Doctor ──────────────────────────────────── */}
         <Route path="doctor/dashboard" element={<ProtectedRoute allowedRoles={['DOCTOR']}><DoctorDashboard /></ProtectedRoute>} />
