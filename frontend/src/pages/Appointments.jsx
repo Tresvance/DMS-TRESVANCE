@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { appointmentsAPI, patientsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -9,8 +9,63 @@ import { Plus, Edit2, Trash2, Calendar, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
-  patient: '', doctor: '', appointment_date: '', appointment_time: '',
+  patient: '', doctor: '', appointment_date: '', appointment_time: '09:00',
   reason: '', status: 'Scheduled', notes: '',
+};
+
+// ── Helpers ───────────────────────────────────────────
+const formatTime12h = (timeStr) => {
+  if (!timeStr) return '—';
+  const [h, m] = timeStr.split(':');
+  let hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${hour.toString().padStart(2, '0')}:${m} ${ampm}`;
+};
+
+const TimePicker = ({ value, onChange }) => {
+  // Parse value (HH:mm) into h, m, ampm
+  const [h24, m] = (value || '09:00').split(':');
+  let h12 = parseInt(h24) % 12 || 12;
+  const ampm = parseInt(h24) >= 12 ? 'PM' : 'AM';
+
+  const handleChange = (newH12, newM, newAmpm) => {
+    let h24 = parseInt(newH12);
+    if (newAmpm === 'PM' && h24 !== 12) h24 += 12;
+    if (newAmpm === 'AM' && h24 === 12) h24 = 0;
+    onChange(`${h24.toString().padStart(2, '0')}:${newM}`);
+  };
+
+  const minutes = useMemo(() => 
+    [...Array(12)].map((_, i) => (i * 5).toString().padStart(2, '0')), []
+  );
+
+  return (
+    <div className="flex gap-2">
+      <select 
+        value={h12} 
+        onChange={e => handleChange(e.target.value, m, ampm)} 
+        className="input-field w-full"
+      >
+        {[...Array(12)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+      </select>
+      <select 
+        value={m} 
+        onChange={e => handleChange(h12, e.target.value, ampm)} 
+        className="input-field w-full"
+      >
+        {minutes.map(min => <option key={min} value={min}>{min}</option>)}
+      </select>
+      <select 
+        value={ampm} 
+        onChange={e => handleChange(h12, m, e.target.value)} 
+        className="input-field w-full"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
 };
 
 export default function Appointments() {
@@ -49,7 +104,8 @@ export default function Appointments() {
   const openEdit = (a) => {
     setForm({
       patient: a.patient, doctor: a.doctor, appointment_date: a.appointment_date,
-      appointment_time: a.appointment_time, reason: a.reason,
+      appointment_time: a.appointment_time?.slice(0, 5) || '09:00', 
+      reason: a.reason,
       status: a.status, notes: a.notes || '',
     });
     setEditId(a.id); setModalOpen(true);
@@ -105,7 +161,7 @@ export default function Appointments() {
                 <td className="table-cell font-medium">{a.patient_name}</td>
                 <td className="table-cell">{a.doctor_name}</td>
                 <td className="table-cell">{new Date(a.appointment_date).toLocaleDateString()}</td>
-                <td className="table-cell">{a.appointment_time?.slice(0, 5)}</td>
+                <td className="table-cell font-semibold text-blue-600">{formatTime12h(a.appointment_time)}</td>
                 <td className="table-cell text-gray-500 max-w-xs truncate">{a.reason}</td>
                 <td className="table-cell"><StatusBadge status={a.status} /></td>
                 {canEdit && (
@@ -140,8 +196,8 @@ export default function Appointments() {
             <FormField label="Date" required>
               <input type="date" value={form.appointment_date} onChange={e => setForm(f => ({ ...f, appointment_date: e.target.value }))} className="input-field" />
             </FormField>
-            <FormField label="Time" required>
-              <input type="time" value={form.appointment_time} onChange={e => setForm(f => ({ ...f, appointment_time: e.target.value }))} className="input-field" />
+            <FormField label="Time (AM/PM)" required>
+              <TimePicker value={form.appointment_time} onChange={val => setForm(f => ({ ...f, appointment_time: val }))} />
             </FormField>
           </div>
           <FormField label="Reason" required>

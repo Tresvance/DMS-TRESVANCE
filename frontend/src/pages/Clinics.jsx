@@ -25,7 +25,9 @@ export default function Clinics() {
   const [saving,       setSaving]       = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
-  const [copied,       setCopied]       = useState(null);	
+
+  const [copied,       setCopied]       = useState(null);
+
   const [viewTarget,   setViewTarget]   = useState(null);
   // Payment modal state
   const [paymentModal, setPaymentModal] = useState(false);
