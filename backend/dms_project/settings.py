@@ -15,7 +15,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 _raw_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(',') if h.strip()]
 
-# -- CSRF TRUSTED ORIGINS — required for admin login in production -------------
+# -- CSRF TRUSTED ORIGINS ï¿½ required for admin login in production -------------
 _raw_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000')
 CSRF_TRUSTED_ORIGINS = [h.strip() for h in _raw_csrf.split(',') if h.strip()]
 
@@ -122,7 +122,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL   = '/media/'
 MEDIA_ROOT  = BASE_DIR / 'media'
 
-# WhiteNoise — serves admin CSS/JS in production without nginx
+# WhiteNoise ï¿½ serves admin CSS/JS in production without nginx
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -184,4 +184,4 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'h0gSRoU7jLQJBLoQ9Uq
 from django.contrib import admin as _admin  # noqa: E402
 _admin.site.site_header = 'DMS-TRESVANCE Administration'
 _admin.site.site_title  = 'DMS-TRESVANCE Admin'
-_admin.site.index_title =  Tresvance — Dental Management System'
+_admin.site.index_title =  'Tresvance  Dental Management System'
