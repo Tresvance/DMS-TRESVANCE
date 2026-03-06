@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { clinicsAPI, paymentsAPI } from '../services/api';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
-<<<<<<< HEAD
-import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check, Eye } from 'lucide-react';
-=======
 import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check, CreditCard, Clock, AlertCircle } from 'lucide-react';
->>>>>>> e1cd172f62b8ae724e1e643e4455c792076e95d5
 import toast from 'react-hot-toast';
 
 const INITIAL = {
@@ -30,15 +26,11 @@ export default function Clinics() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
   const [copied,       setCopied]       = useState(null);
-<<<<<<< HEAD
-  const [viewTarget,   setViewTarget]   = useState(null);
-=======
   // Payment modal state
   const [paymentModal, setPaymentModal] = useState(false);
   const [paymentClinic, setPaymentClinic] = useState(null);
   const [paymentMonths, setPaymentMonths] = useState(1);
   const [processingPayment, setProcessingPayment] = useState(false);
->>>>>>> e1cd172f62b8ae724e1e643e4455c792076e95d5
 
   const fc = (f) => (e) => {
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -286,12 +278,6 @@ export default function Clinics() {
                 </td>
                 <td className="table-cell">
                   <div className="flex gap-2">
-<<<<<<< HEAD
-                    <button onClick={() => setViewTarget(c)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg" title="View Details">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => openEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
-=======
                     {/* Pay button - show for non-trial or when subscription amount is set */}
                     {c.subscription_amount > 0 && !c.is_trial && (
                       <button
@@ -303,7 +289,6 @@ export default function Clinics() {
                       </button>
                     )}
                     <button onClick={() => openEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
->>>>>>> e1cd172f62b8ae724e1e643e4455c792076e95d5
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => setDeleteTarget(c)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
