@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, Building2, UserPlus, Calendar,
   FileText, Pill, CreditCard, LogOut, Menu, X,
-  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon
+  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,7 @@ const navConfig = {
   SUPER_ADMIN: [
     { to: '/super/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/super/clinics',        icon: Building2,       label: 'Clinics' },
+    { to: '/super/payments',       icon: Receipt,         label: 'All Payments' },
     { to: '/super/clinic-admins',  icon: ShieldCheck,     label: 'Clinic Admins' },
     { to: '/super/agents',         icon: HeadphonesIcon,  label: 'Support Agents' },
     { divider: true },
@@ -30,6 +31,7 @@ const navConfig = {
     { to: '/records',              icon: FileText,        label: 'Records' },
     { to: '/medicines',            icon: Pill,            label: 'Medicines' },
     { to: '/billing',              icon: CreditCard,      label: 'Billing' },
+    { to: '/clinic/payments',      icon: Receipt,         label: 'Payment History' },
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],
