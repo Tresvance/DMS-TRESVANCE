@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { clinicsAPI, paymentsAPI } from '../services/api';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
-import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check, CreditCard, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check, Eye, CreditCard, Clock, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL = {
@@ -26,8 +26,12 @@ export default function Clinics() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
   const [copied,       setCopied]       = useState(null);
+<<<<<<< HEAD
     const [viewTarget,   setViewTarget]   = useState(null);
 
+=======
+  const [viewTarget,   setViewTarget]   = useState(null);
+>>>>>>> 400a9d33ab6aa3871df801362889271043323c2f
   // Payment modal state
   const [paymentModal, setPaymentModal] = useState(false);
   const [paymentClinic, setPaymentClinic] = useState(null);
