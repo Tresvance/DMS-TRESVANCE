@@ -77,28 +77,25 @@ WSGI_APPLICATION = 'dms_project.wsgi.application'
 
 # Database configuration
 # Development: USE_SQLITE=True (SQLite)
-# Production:  USE_SQLITE=False (MySQL)
-if os.environ.get('USE_SQLITE') == 'True':
+# Production:  USE_SQLITE=False (PostgreSQL)
+if os.environ.get('USE_SQLITE', 'True') == 'True':
     # SQLite for development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',  # Local file in development
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 else:
-    # MySQL for production
+    # PostgreSQL for production
     DATABASES = {
         'default': {
-            'ENGINE':   'django.db.backends.mysql',
-            'NAME':     os.environ.get('DB_NAME', 'dms_tresvance'),
-            'USER':     os.environ.get('DB_USER', 'root'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'root'),
-            'HOST':     os.environ.get('DB_HOST', 'db'),
-            'PORT':     os.environ.get('DB_PORT', '3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-            },
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'dms_tresvance'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', '123456'),
+            'HOST': os.environ.get('DB_HOST', 'db'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
 
