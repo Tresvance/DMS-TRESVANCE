@@ -12,12 +12,18 @@ class BillingItemSerializer(serializers.ModelSerializer):
 class BillingSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
     clinic_name = serializers.SerializerMethodField()
+    clinic_address = serializers.SerializerMethodField()
+    clinic_phone = serializers.SerializerMethodField()
+    clinic_email = serializers.SerializerMethodField()
+    clinic_registration_number = serializers.SerializerMethodField()
     items = BillingItemSerializer(many=True, required=False)
 
     class Meta:
         model = Billing
         fields = [
-            'id', 'clinic', 'clinic_name', 'patient', 'patient_name',
+            'id', 'clinic', 'clinic_name', 'clinic_address', 
+            'clinic_phone', 'clinic_email', 'clinic_registration_number',
+            'patient', 'patient_name',
             'appointment', 'invoice_number', 'total_amount', 'paid_amount',
             'balance', 'payment_method', 'invoice_date', 'status',
             'notes', 'created_at', 'items'
@@ -29,6 +35,18 @@ class BillingSerializer(serializers.ModelSerializer):
 
     def get_clinic_name(self, obj):
         return obj.clinic.clinic_name
+
+    def get_clinic_address(self, obj):
+        return obj.clinic.address
+
+    def get_clinic_phone(self, obj):
+        return obj.clinic.phone
+
+    def get_clinic_email(self, obj):
+        return obj.clinic.email
+
+    def get_clinic_registration_number(self, obj):
+        return obj.clinic.registration_number
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
