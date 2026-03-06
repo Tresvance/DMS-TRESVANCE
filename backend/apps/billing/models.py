@@ -22,7 +22,7 @@ class Billing(models.Model):
         null=True, blank=True, related_name='billing'
     )
     invoice_number = models.CharField(max_length=50, unique=True, blank=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
@@ -48,4 +48,33 @@ class Billing(models.Model):
             self.status = self.Status.PAID
         elif self.paid_amount > 0:
             self.status = self.Status.PARTIAL
+        super().save(*args, **kwargs)
+
+    def recalculate_total(self):
+        """Recalculate total_amount from line items (if any exist)."""
+        from django.db.models import Sum
+        items_total = self.items.aggregate(total=Sum('amount'))['total']
+        if items_total is not None:
+            self.total_amount = items_total
+            self.save()
+
+
+class BillingItem(models.Model):
+    billing = models.ForeignKey(Billing, on_delete=models.CASCADE, related_name='items')
+    description = models.CharField(max_length=255, help_text='Treatment or service name')
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                  help_text='Auto-computed: quantity × unit_price')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'billing_items'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.description} × {self.quantity} = ₹{self.amount}"
+
+    def save(self, *args, **kwargs):
+        self.amount = self.quantity * self.unit_price
         super().save(*args, **kwargs)
