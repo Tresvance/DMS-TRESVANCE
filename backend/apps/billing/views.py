@@ -22,13 +22,16 @@ class BillingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
+        if user.role == 'SUPER_ADMIN':
             qs = Billing.objects.all()
         else:
             qs = Billing.objects.filter(clinic=user.clinic)
-        return qs.select_related('clinic', 'patient', 'appointment')
+        return qs.select_related('clinic', 'patient', 'appointment').prefetch_related('items')
 
     def perform_create(self, serializer):
         user = self.request.user
-        clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
+        if user.role == 'SUPER_ADMIN':
+            clinic = serializer.validated_data.get('clinic')
+        else:
+            clinic = user.clinic
         serializer.save(clinic=clinic)

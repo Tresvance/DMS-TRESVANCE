@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { clinicsAPI } from '../services/api';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
-import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Building2, Loader2, Globe, Copy, Check, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL = {
@@ -25,6 +25,7 @@ export default function Clinics() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
   const [copied,       setCopied]       = useState(null);
+  const [viewTarget,   setViewTarget]   = useState(null);
 
   const fc = (f) => (e) => {
     const val = e.target.value;
@@ -173,10 +174,13 @@ export default function Clinics() {
                 </td>
                 <td className="table-cell">
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <button onClick={() => setViewTarget(c)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg" title="View Details">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => openEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setDeleteTarget(c)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                    <button onClick={() => setDeleteTarget(c)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -257,6 +261,64 @@ export default function Clinics() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Details Modal */}
+      <Modal isOpen={!!viewTarget} onClose={() => setViewTarget(null)} title="Clinic Details">
+        {viewTarget && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{viewTarget.clinic_name}</h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Globe className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{viewTarget.subdomain}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Clinic Code</p>
+                <p className="text-sm text-gray-900 font-mono">{viewTarget.clinic_code}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Registration Number</p>
+                <p className="text-sm text-gray-900 font-mono">{viewTarget.registration_number}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Phone</p>
+                <p className="text-sm text-gray-900">{viewTarget.phone || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Email</p>
+                <p className="text-sm text-blue-600">{viewTarget.email || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Staff Count</p>
+                <p className="text-sm text-gray-900">{viewTarget.staff_count ?? '—'} staff</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium mb-1">Status</p>
+                {viewTarget.is_active
+                  ? <span className="badge-green">Active</span>
+                  : <span className="badge-gray">Inactive</span>}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Address</p>
+              <p className="text-sm text-gray-900">{viewTarget.address || '—'}</p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button onClick={() => setViewTarget(null)} className="btn-secondary">Close</button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <ConfirmDialog
