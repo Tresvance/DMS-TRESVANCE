@@ -75,15 +75,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'dms_project.wsgi.application'
 
-# Database configuration - supports SQLite for production simplicity
+# Database configuration
+# Development: USE_SQLITE=True (SQLite)
+# Production:  USE_SQLITE=False (MySQL)
 if os.environ.get('USE_SQLITE') == 'True':
+    # SQLite for development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/app/data/db.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',  # Local file in development
         }
     }
 else:
+    # MySQL for production
     DATABASES = {
         'default': {
             'ENGINE':   'django.db.backends.mysql',
@@ -160,3 +164,7 @@ else:
     ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_SNrglQGkhEr1dI')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'h0gSRoU7jLQJBLoQ9Uq31kRp')

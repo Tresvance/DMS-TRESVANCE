@@ -68,11 +68,20 @@ export const clinicsAPI = {
   update: (id, data) => api.put(`/clinics/${id}/`, data),
   patch: (id, data) => api.patch(`/clinics/${id}/`, data),
   delete: (id) => api.delete(`/clinics/${id}/`),
+  // Subscription
+  getSubscriptionStatus: (clinicId) => api.get(`/clinics/${clinicId}/subscription/`),
 };
 
 // ── Clinic (public) ───────────────────────────────────
 export const clinicAPI = {
   getBySubdomain: (subdomain) => api.get('/clinics/info/', { params: { subdomain } }),
+};
+
+// ── Payments ──────────────────────────────────────────
+export const paymentsAPI = {
+  list: (params) => api.get('/clinics/payments/', { params }),
+  createOrder: (data) => api.post('/clinics/payments/create-order/', data),
+  verify: (data) => api.post('/clinics/payments/verify/', data),
 };
 
 // ── Patients ──────────────────────────────────────────

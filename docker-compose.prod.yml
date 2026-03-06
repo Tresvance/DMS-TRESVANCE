@@ -1,4 +1,22 @@
 services:
+  # ── MySQL Database ──────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: dms_db_prod
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=ChangeMeRootPass123
+      - MYSQL_DATABASE=dms_tresvance
+      - MYSQL_USER=dms_user
+      - MYSQL_PASSWORD=ChangeMeDbPass456
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -10,11 +28,20 @@ services:
       - DEBUG=False
       - ALLOWED_HOSTS=tresvance.com,.tresvance.com,localhost,127.0.0.1
       - CORS_ALLOW_ALL=True
-      - USE_SQLITE=True
+      - USE_SQLITE=False
+      - DB_NAME=dms_tresvance
+      - DB_USER=dms_user
+      - DB_PASSWORD=ChangeMeDbPass456
+      - DB_HOST=db
+      - DB_PORT=3306
     ports:
       - "4000:8000"
     volumes:
       - dms_data:/app/data
+      - media_files:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
     command: >
       sh -c "pip install gunicorn &&
              mkdir -p /app/data &&
@@ -37,3 +64,5 @@ services:
 
 volumes:
   dms_data:
+  mysql_data:
+  media_files:
