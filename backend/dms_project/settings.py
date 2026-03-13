@@ -165,5 +165,5 @@ else:
 
 CORS_ALLOW_CREDENTIALS = True
 
-RAZORPAY_KEY_ID     = os.environ.get('RAZORPAY_KEY_ID',     'rzp_test_SNrglQGkhEr1dI')
-RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'h0gSRoU7jLQJBLoQ9Uq31kRp')
+RAZORPAY_KEY_ID     = os.environ.get('RAZORPAY_KEY_ID',     'rzp_live_SQbp3bW2rnPvxG')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'sslef4wkf8pTeVpjwTrIhpqw')
