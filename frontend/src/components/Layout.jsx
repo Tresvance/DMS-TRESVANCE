@@ -3,9 +3,10 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, Building2, UserPlus, Calendar,
-  FileText, Pill, CreditCard, LogOut, Menu, X,
+  FileText, Pill, CreditCard, LogOut, Menu, X, Clock,
   Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt
 } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 
 const navConfig = {
@@ -26,7 +27,9 @@ const navConfig = {
   CLINIC_ADMIN: [
     { to: '/clinic/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/clinic/staff',         icon: Users,           label: 'Staff' },
+    { to: '/clinic/shifts',        icon: Clock,           label: 'Shifts' },
     { to: '/patients',             icon: UserPlus,        label: 'Patients' },
+
     { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
     { to: '/records',              icon: FileText,        label: 'Records' },
     { to: '/medicines',            icon: Pill,            label: 'Medicines' },

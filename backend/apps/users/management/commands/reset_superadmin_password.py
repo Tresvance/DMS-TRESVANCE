@@ -2,6 +2,9 @@
 Reset Super Admin password securely.
 Run: python manage.py reset_superadmin_password
 """
+
+# docker-compose exec backend python manage.py reset_superadmin_password
+
 from django.core.management.base import BaseCommand
 import getpass
 

@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production-use-env-variable')
@@ -43,6 +44,7 @@ LOCAL_APPS = [
     'apps.medicines',
     'apps.billing',
     'apps.support',
+    'apps.shifts',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -164,6 +166,10 @@ else:
     ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# -- Razorpay ------------------------------------------------------------------
+RAZORPAY_KEY_ID     = os.environ.get('RAZORPAY_KEY_ID',     'rzp_test_SNrglQGkhEr1dI')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'h0gSRoU7jLQJBLoQ9Uq31kRp')
 
 RAZORPAY_KEY_ID     = os.environ.get('RAZORPAY_KEY_ID',     'rzp_live_SQbp3bW2rnPvxG')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'sslef4wkf8pTeVpjwTrIhpqw')
