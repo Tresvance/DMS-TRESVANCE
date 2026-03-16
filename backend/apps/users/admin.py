@@ -1,4 +1,8 @@
 from django.contrib import admin
+admin.site.site_header = 'DMS-TRESVANCE Administration'
+admin.site.site_title  = 'DMS-TRESVANCE Admin'
+admin.site.index_title = 'Tresvance Dental Management System'
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
