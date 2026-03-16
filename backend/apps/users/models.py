@@ -25,6 +25,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         SUPPORT_AGENT = 'SUPPORT_AGENT', 'Support Agent (Tresvance)'
         CLINIC_ADMIN  = 'CLINIC_ADMIN',  'Clinic Admin'
         DOCTOR        = 'DOCTOR',        'Doctor'
+        NURSE         = 'NURSE',         'Nurse'
         RECEPTION     = 'RECEPTION',     'Receptionist'
 
     first_name = models.CharField(max_length=100)
@@ -76,6 +77,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_doctor(self):
         return self.role == self.Role.DOCTOR
+
+    @property
+    def is_nurse(self):
+        return self.role == self.Role.NURSE
 
     @property
     def is_reception(self):

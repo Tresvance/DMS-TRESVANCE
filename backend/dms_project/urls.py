@@ -13,4 +13,12 @@ urlpatterns = [
     path('api/medicines/', include('apps.medicines.urls')),
     path('api/billing/', include('apps.billing.urls')),
     path('api/support/', include('apps.support.urls')),
+    path('api/shifts/', include('apps.shifts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+# -- Admin Branding ------------------------------------------------------------
+admin.site.site_header = 'DMS-TRESVANCE Administration'
+admin.site.site_title  = 'DMS-TRESVANCE Admin'
+admin.site.index_title = 'Tresvance Dental Management System'
+

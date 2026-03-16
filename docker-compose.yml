@@ -25,7 +25,9 @@ services:
              python manage.py makemigrations medicines &&
              python manage.py makemigrations billing &&
              python manage.py makemigrations support &&
+             python manage.py makemigrations shifts &&
              python manage.py migrate &&
+
              python manage.py runserver 0.0.0.0:8000"
 
   # ── React Frontend ──────────────────────────────

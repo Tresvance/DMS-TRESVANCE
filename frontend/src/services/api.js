@@ -147,6 +147,17 @@ export const billingAPI = {
   delete: (id) => api.delete(`/billing/${id}/`),
 };
 
+// ── Shifts ────────────────────────────────────────────
+export const shiftsAPI = {
+  list:   (params) => api.get('/shifts/', { params }),
+  get:    (id)     => api.get(`/shifts/${id}/`),
+  create: (data)   => api.post('/shifts/', data),
+  update: (id, data) => api.put(`/shifts/${id}/`, data),
+  patch:  (id, data) => api.patch(`/shifts/${id}/`, data),
+  delete: (id)     => api.delete(`/shifts/${id}/`),
+};
+
+
 export default api;
 
 // ── Support / Tickets ─────────────────────────────
