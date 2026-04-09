@@ -2,14 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { patientsAPI } from '../services/api';
 import { FormField, Spinner } from '../components/UI';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
-  first_name: '', last_name: '', gender: '', date_of_birth: '',
-  phone: '', email: '', address: '', blood_group: 'Unknown',
-  allergies: '', medical_history: '',
-  emergency_contact_name: '', emergency_contact_phone: '',
+  first_name: '', middle_name: '', last_name: '', gender: '', date_of_birth: '',
+  marital_status: '', occupation: '',
+  phone: '', email: '', preferred_contact_method: 'Phone',
+  address: '', city: '', pincode: '',
+  blood_group: 'Unknown', allergies: '', medical_history: '',
+  emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relationship: '',
+  insurance_provider: '', insurance_policy_number: '', insurance_coverage_details: '',
+  referring_source: '',
 };
 
 export default function AddPatient() {
@@ -19,18 +23,35 @@ export default function AddPatient() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
+  const [showReferralOptions, setShowReferralOptions] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
     patientsAPI.get(id).then(({ data }) => {
       setForm({
-        first_name: data.first_name, last_name: data.last_name,
-        gender: data.gender, date_of_birth: data.date_of_birth,
-        phone: data.phone, email: data.email || '',
-        address: data.address || '', blood_group: data.blood_group,
-        allergies: data.allergies || '', medical_history: data.medical_history || '',
+        first_name: data.first_name, 
+        middle_name: data.middle_name || '',
+        last_name: data.last_name,
+        gender: data.gender, 
+        date_of_birth: data.date_of_birth,
+        marital_status: data.marital_status || '',
+        occupation: data.occupation || '',
+        phone: data.phone, 
+        email: data.email || '',
+        preferred_contact_method: data.preferred_contact_method || 'Phone',
+        address: data.address || '', 
+        city: data.city || '',
+        pincode: data.pincode || '',
+        blood_group: data.blood_group,
+        allergies: data.allergies || '', 
+        medical_history: data.medical_history || '',
         emergency_contact_name: data.emergency_contact_name || '',
         emergency_contact_phone: data.emergency_contact_phone || '',
+        emergency_contact_relationship: data.emergency_contact_relationship || '',
+        insurance_provider: data.insurance_provider || '',
+        insurance_policy_number: data.insurance_policy_number || '',
+        insurance_coverage_details: data.insurance_coverage_details || '',
+        referring_source: data.referring_source || '',
       });
     }).catch(() => toast.error('Failed to load patient'))
       .finally(() => setFetching(false));
@@ -81,6 +102,9 @@ export default function AddPatient() {
             <FormField label="First Name" required>
               <input name="first_name" value={form.first_name} onChange={handleChange} className="input-field" placeholder="John" />
             </FormField>
+            <FormField label="Middle Name">
+              <input name="middle_name" value={form.middle_name} onChange={handleChange} className="input-field" placeholder="Quincy" />
+            </FormField>
             <FormField label="Last Name" required>
               <input name="last_name" value={form.last_name} onChange={handleChange} className="input-field" placeholder="Doe" />
             </FormField>
@@ -95,11 +119,31 @@ export default function AddPatient() {
             <FormField label="Date of Birth" required>
               <input name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} className="input-field" />
             </FormField>
+            <FormField label="Marital Status">
+              <select name="marital_status" value={form.marital_status} onChange={handleChange} className="input-field">
+                <option value="">Select</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </FormField>
+            <FormField label="Occupation">
+              <input name="occupation" value={form.occupation} onChange={handleChange} className="input-field" placeholder="Engineer, Teacher, etc." />
+            </FormField>
             <FormField label="Phone" required>
               <input name="phone" value={form.phone} onChange={handleChange} className="input-field" placeholder="+91 9876543210" />
             </FormField>
             <FormField label="Email">
               <input name="email" type="email" value={form.email} onChange={handleChange} className="input-field" placeholder="patient@email.com" />
+            </FormField>
+            <FormField label="Preferred Contact">
+              <select name="preferred_contact_method" value={form.preferred_contact_method} onChange={handleChange} className="input-field">
+                <option value="Phone">Phone</option>
+                <option value="Email">Email</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="SMS">SMS</option>
+              </select>
             </FormField>
             <FormField label="Blood Group">
               <select name="blood_group" value={form.blood_group} onChange={handleChange} className="input-field">
@@ -109,7 +153,30 @@ export default function AddPatient() {
               </select>
             </FormField>
             <FormField label="Address">
-              <input name="address" value={form.address} onChange={handleChange} className="input-field" placeholder="Full address" />
+              <input name="address" value={form.address} onChange={handleChange} className="input-field" placeholder="Street/Area" />
+            </FormField>
+            <FormField label="City">
+              <input name="city" value={form.city} onChange={handleChange} className="input-field" placeholder="City name" />
+            </FormField>
+            <FormField label="Pincode">
+              <input name="pincode" value={form.pincode} onChange={handleChange} className="input-field" placeholder="600001" />
+            </FormField>
+            <FormField label="Referring Source">
+              <div className="flex gap-2">
+                <input name="referring_source" value={form.referring_source} onChange={handleChange} className="input-field" placeholder="How they found us?" />
+                <button type="button" onClick={() => setShowReferralOptions(!showReferralOptions)} className="p-2 border rounded-lg hover:bg-gray-50 flex-shrink-0">
+                  <Plus className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              {showReferralOptions && (
+                <div className="flex flex-wrap gap-1.5 mt-2 bg-gray-50 p-2 rounded-lg border border-dashed">
+                  {['Existing Patient', 'Doctor Referral', 'Online Search', 'Social Media', 'Walk-in'].map(s => (
+                    <button key={s} type="button" onClick={() => { setForm(f => ({...f, referring_source: s})); setShowReferralOptions(false); }} className="text-[10px] uppercase font-bold px-2 py-1 bg-white border rounded hover:border-blue-500 hover:text-blue-600 transition-colors">
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </FormField>
           </div>
         </div>
@@ -137,6 +204,30 @@ export default function AddPatient() {
             <FormField label="Contact Phone">
               <input name="emergency_contact_phone" value={form.emergency_contact_phone} onChange={handleChange} className="input-field" placeholder="Emergency contact phone" />
             </FormField>
+            <FormField label="Relationship">
+              <input name="emergency_contact_relationship" value={form.emergency_contact_relationship} onChange={handleChange} className="input-field" placeholder="Spouse, Parent, etc." />
+            </FormField>
+          </div>
+        </div>
+
+        {/* Insurance Info */}
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Insurance Information</h2>
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">OPTIONAL</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Insurance Provider">
+              <input name="insurance_provider" value={form.insurance_provider} onChange={handleChange} className="input-field" placeholder="e.g. Star Health" />
+            </FormField>
+            <FormField label="Policy Number">
+              <input name="insurance_policy_number" value={form.insurance_policy_number} onChange={handleChange} className="input-field" placeholder="Policy ID" />
+            </FormField>
+            <div className="sm:col-span-2">
+              <FormField label="Coverage Details">
+                <textarea name="insurance_coverage_details" value={form.insurance_coverage_details} onChange={handleChange} className="input-field" rows={2} placeholder="Briefly describe coverage..." />
+              </FormField>
+            </div>
           </div>
         </div>
 

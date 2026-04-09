@@ -23,15 +23,54 @@ class Patient(models.Model):
         AB_NEG = 'AB-', 'AB-'
         UNKNOWN = 'Unknown', 'Unknown'
 
+    class MaritalStatus(models.TextChoices):
+        SINGLE = 'Single', 'Single'
+        MARRIED = 'Married', 'Married'
+        DIVORCED = 'Divorced', 'Divorced'
+        WIDOWED = 'Widowed', 'Widowed'
+
+    class ContactMethod(models.TextChoices):
+        PHONE = 'Phone', 'Phone'
+        EMAIL = 'Email', 'Email'
+        WHATSAPP = 'WhatsApp', 'WhatsApp'
+        SMS = 'SMS', 'SMS'
+
     clinic = models.ForeignKey('clinics.Clinic', on_delete=models.CASCADE, related_name='patients')
     patient_id = models.CharField(max_length=20, unique=True, default=generate_patient_id)
     first_name = models.CharField(max_length=100)
+    middle_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=Gender.choices)
     date_of_birth = models.DateField()
+    marital_status = models.CharField(max_length=20, choices=MaritalStatus.choices, blank=True, null=True)
+    occupation = models.CharField(max_length=100, blank=True)
+    
+    # Contact Info
     phone = models.CharField(max_length=20)
     email = models.EmailField(blank=True)
+    preferred_contact_method = models.CharField(max_length=20, choices=ContactMethod.choices, default=ContactMethod.PHONE)
+    
+    # Address
     address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=20, blank=True)
+    
+    blood_group = models.CharField(max_length=10, choices=BloodGroup.choices, default=BloodGroup.UNKNOWN)
+    allergies = models.TextField(blank=True)
+    medical_history = models.TextField(blank=True)
+    
+    # Emergency Contact
+    emergency_contact_name = models.CharField(max_length=150, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    emergency_contact_relationship = models.CharField(max_length=100, blank=True)
+    
+    # Insurance Information
+    insurance_provider = models.CharField(max_length=150, blank=True)
+    insurance_policy_number = models.CharField(max_length=100, blank=True)
+    insurance_coverage_details = models.TextField(blank=True)
+    
+    # Referral
+    referring_source = models.CharField(max_length=150, blank=True)
     blood_group = models.CharField(max_length=10, choices=BloodGroup.choices, default=BloodGroup.UNKNOWN)
     allergies = models.TextField(blank=True)
     medical_history = models.TextField(blank=True)
@@ -49,7 +88,8 @@ class Patient(models.Model):
         return f"{self.patient_id} - {self.first_name} {self.last_name}"
 
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
+        names = [self.first_name, self.middle_name, self.last_name]
+        return " ".join([n for n in names if n]).strip()
 
     @property
     def age(self):
