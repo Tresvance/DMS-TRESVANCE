@@ -42,6 +42,7 @@ class Patient(models.Model):
         INACTIVE = 'INACTIVE', 'Inactive'
         TRANSFERRED = 'TRANSFERRED', 'Transferred'
         DECEASED = 'DECEASED', 'Deceased'
+        ARCHIVED = 'ARCHIVED', 'Archived'
 
     clinic = models.ForeignKey('clinics.Clinic', on_delete=models.CASCADE, related_name='patients')
     patient_id = models.CharField(max_length=20, unique=True, default=generate_patient_id)
