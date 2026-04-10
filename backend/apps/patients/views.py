@@ -26,7 +26,7 @@ from apps.users.permissions import IsAdminOrReception
 
 class PatientViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['gender', 'blood_group', 'is_active', 'date_of_birth', 'patient_id', 'phone', 'email']
+    filterset_fields = ['status', 'gender', 'blood_group', 'is_active', 'date_of_birth', 'patient_id', 'phone', 'email']
     search_fields = ['first_name', 'middle_name', 'last_name', 'patient_id', 'phone', 'email']
     ordering_fields = ['created_at', 'first_name', 'last_name', 'date_of_birth']
     ordering = ['-created_at']
@@ -40,8 +40,16 @@ class PatientViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # By default, only show active patients in lists
-        qs = Patient.objects.filter(is_active=True).select_related('clinic')
+        qs = Patient.objects.all().select_related('clinic')
+        
+        # By default, only show active patients unless specifically requesting archived/inactive
+        req_status = self.request.query_params.get('status')
+        req_active = self.request.query_params.get('is_active')
+        
+        if req_status == 'ARCHIVED' or req_active == 'false':
+            pass # Keep all in queryset, filtering is handled by DjangoFilterBackend
+        elif req_active != 'true':
+            qs = qs.filter(is_active=True)
         
         # Annotate with whether they have an active treatment consent
         qs = qs.annotate(
@@ -205,7 +213,60 @@ class PatientViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=201)
             return Response(serializer.errors, status=400)
 
+    @action(detail=False, methods=['post'])
+    def auto_archive(self, request):
+        """Automatically archives patients with no activity in over 4 years."""
+        from django.utils import timezone
+        import datetime
+
+        clinic = request.user.clinic
+        if not clinic and request.user.role != 'SUPER_ADMIN':
+            return Response({"error": "Unauthorized"}, status=403)
+
+        threshold_date = timezone.now() - datetime.timedelta(days=4*365)
+        
+        base_qs = Patient.objects.filter(is_active=True, status='ACTIVE')
+        if clinic:
+            base_qs = base_qs.filter(clinic=clinic)
+
+        # Patients with no appointments AND created more than 4 years ago,
+        # OR patients whose latest appointment was more than 4 years ago.
+        # Simplification: In this example, if the system doesn't heavily track last visit at the patient level yet,
+        # we can just use latest appointment or created_at.
+        
+        # We need to annotate latest appointment
+        from django.db.models import Max
+        base_qs = base_qs.annotate(last_visit=Max('appointments__appointment_date'))
+        
+        archived_count = 0
+        for patient in base_qs:
+            # Determine last activity date
+            last_activity = patient.last_visit if patient.last_visit else patient.created_at.date()
+            if isinstance(last_activity, datetime.datetime):
+                last_activity = last_activity.date()
+            
+            if last_activity < threshold_date.date():
+                patient.status = 'ARCHIVED'
+                patient.is_active = False
+                patient.save()
+                archived_count += 1
+
+        return Response({"message": f"Successfully archived {archived_count} patients", "archived_count": archived_count})
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore an archived patient to active status."""
+        patient = self.get_object()
+        if patient.status != 'ARCHIVED':
+            return Response({"error": "Patient is not archived."}, status=400)
+            
+        patient.status = 'ACTIVE'
+        patient.is_active = True
+        patient.save()
+        return Response({"message": "Patient restored successfully to active status."})
+
     @action(detail=False, methods=['get'])
+
     def analytics(self, request):
         """Returns demographic and growth analytics for the current clinic."""
         from django.utils import timezone

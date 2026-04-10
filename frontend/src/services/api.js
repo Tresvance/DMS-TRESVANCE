@@ -105,6 +105,8 @@ export const patientsAPI = {
   getConsents: (id) => api.get(`/patients/${id}/consents/`),
   createConsent: (id, data) => api.post(`/patients/${id}/consents/`, data),
   analytics: () => api.get('/patients/analytics/'),
+  autoArchive: () => api.post('/patients/auto_archive/'),
+  restoreArchive: (id) => api.post(`/patients/${id}/restore/`),
 };
 
 // ── Patient Documents (X-rays, Scans, Reports) ────────

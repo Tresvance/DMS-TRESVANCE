@@ -18,6 +18,7 @@ export default function Patients() {
   const { user } = useAuth();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('ACTIVE');
   const [params, setParams] = useState({ search: '' });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -34,11 +35,17 @@ export default function Patients() {
   const loadPatients = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await patientsAPI.list(params);
+      const fetchParams = { ...params };
+      if (activeTab === 'ARCHIVED') {
+        fetchParams.status = 'ARCHIVED';
+      } else {
+        fetchParams.is_active = true;
+      }
+      const { data } = await patientsAPI.list(fetchParams);
       setPatients(data.results || data);
     } catch { toast.error('Failed to load patients'); }
     finally { setLoading(false); }
-  }, [params]);
+  }, [params, activeTab]);
 
   useEffect(() => { loadPatients(); }, [loadPatients]);
 
@@ -130,7 +137,23 @@ export default function Patients() {
         )}
       />
 
-      <div className="mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+        {/* Tabs for Active/Archived */}
+        <div className="flex bg-gray-100 p-1 rounded-lg self-start">
+          <button 
+            onClick={() => setActiveTab('ACTIVE')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'ACTIVE' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Active Patients
+          </button>
+          <button 
+            onClick={() => setActiveTab('ARCHIVED')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'ARCHIVED' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Archived Vault
+          </button>
+        </div>
+
         <AdvancedSearch 
           onSearch={setParams} 
           onClear={() => setParams({ search: '' })}
@@ -318,45 +341,64 @@ export default function Patients() {
                   </td>
                 <td className="table-cell">
                   <div className="relative flex items-center justify-end gap-1">
-                    <Link to={`/patients/${p.id}/edit`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Patient">
-                      <Edit2 className="w-4 h-4" />
-                    </Link>
-
-                    <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Documents/X-rays">
-                      <FileImage className="w-4 h-4" />
-                    </Link>
-
-                    <button 
-                      onClick={() => setActionMenuId(actionMenuId === p.id ? null : p.id)}
-                      className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-
-                    {actionMenuId === p.id && (
+                    {activeTab === 'ARCHIVED' ? (
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await patientsAPI.restoreArchive(p.id);
+                            toast.success('Patient restored from Archive');
+                            loadPatients();
+                          } catch {
+                            toast.error('Failed to restore patient');
+                          }
+                        }}
+                        className="btn-secondary text-emerald-600 border-emerald-200 hover:bg-emerald-50 px-3 py-1 text-xs"
+                      >
+                        Restore Record
+                      </button>
+                    ) : (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setActionMenuId(null)} />
-                        <div className="absolute right-10 top-1/2 -translate-y-1/2 z-50 bg-white shadow-2xl border border-gray-100 rounded-xl p-1 flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-100 ring-2 ring-white">
-                          <button onClick={() => { setConsentPatient(p); setActionMenuId(null); }} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Consent Manager">
-                            <FileSignature className="w-4 h-4" />
-                          </button>
+                        <Link to={`/patients/${p.id}/edit`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Patient">
+                          <Edit2 className="w-4 h-4" />
+                        </Link>
 
-                          {canEdit && (
-                            <button onClick={() => { setMergeTarget(p); setActionMenuId(null); }} className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Consolidate/Merge">
-                              <GitMerge className="w-4 h-4" />
-                            </button>
-                          )}
+                        <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Documents/X-rays">
+                          <FileImage className="w-4 h-4" />
+                        </Link>
 
-                          <button onClick={() => { handleExport(p); setActionMenuId(null); }} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Export FHIR">
-                            <Download className="w-4 h-4" />
-                          </button>
-                          
-                          <div className="w-px h-4 bg-gray-100 mx-1" />
+                        <button 
+                          onClick={() => setActionMenuId(actionMenuId === p.id ? null : p.id)}
+                          className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
 
-                          <button onClick={() => { setDeleteTarget(p); setActionMenuId(null); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete record">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {actionMenuId === p.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setActionMenuId(null)} />
+                            <div className="absolute right-10 top-1/2 -translate-y-1/2 z-50 bg-white shadow-2xl border border-gray-100 rounded-xl p-1 flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-100 ring-2 ring-white">
+                              <button onClick={() => { setConsentPatient(p); setActionMenuId(null); }} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Consent Manager">
+                                <FileSignature className="w-4 h-4" />
+                              </button>
+
+                              {canEdit && (
+                                <button onClick={() => { setMergeTarget(p); setActionMenuId(null); }} className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Consolidate/Merge">
+                                  <GitMerge className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              <button onClick={() => { handleExport(p); setActionMenuId(null); }} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Export FHIR">
+                                <Download className="w-4 h-4" />
+                              </button>
+                              
+                              <div className="w-px h-4 bg-gray-100 mx-1" />
+
+                              <button onClick={() => { setDeleteTarget(p); setActionMenuId(null); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete record">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>

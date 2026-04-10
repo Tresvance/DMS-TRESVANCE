@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { authAPI, appointmentsAPI, clinicsAPI, paymentsAPI } from '../services/api';
+import { authAPI, appointmentsAPI, clinicsAPI, paymentsAPI, patientsAPI } from '../services/api';
 import { StatCard, Spinner, Table, StatusBadge, Modal, FormField } from '../components/UI';
 import { Users, UserPlus, Calendar, CreditCard, TrendingUp, Stethoscope, Clock, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -40,6 +40,9 @@ export default function ClinicAdminDashboard() {
     }).finally(() => setLoading(false));
 
     loadSubscription();
+    
+    // Trigger background auto-archival check
+    patientsAPI.autoArchive().catch(err => console.error("Auto-archive failed:", err));
   }, [user]);
 
   // Initialize Razorpay payment
