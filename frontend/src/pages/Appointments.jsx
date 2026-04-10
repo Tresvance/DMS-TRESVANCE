@@ -158,7 +158,17 @@ export default function Appointments() {
           <Table headers={['Patient', 'Doctor', 'Date', 'Time', 'Reason', 'Status', ...(canEdit ? ['Actions'] : [])]}>
             {appointments.map(a => (
               <tr key={a.id} className="hover:bg-gray-50">
-                <td className="table-cell font-medium">{a.patient_name}</td>
+                <td className="table-cell">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900">{a.patient_name}</span>
+                      {a.is_first_visit && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-black bg-indigo-600 text-white rounded-md tracking-tight uppercase">First Visit</span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-mono uppercase">{a.patient_id_code}</span>
+                  </div>
+                </td>
                 <td className="table-cell">{a.doctor_name}</td>
                 <td className="table-cell">{new Date(a.appointment_date).toLocaleDateString()}</td>
                 <td className="table-cell font-semibold text-blue-600">{formatTime12h(a.appointment_time)}</td>

@@ -21,6 +21,7 @@ class PatientSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     clinic_name = serializers.SerializerMethodField()
+    is_new = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Patient
@@ -31,9 +32,9 @@ class PatientSerializer(serializers.ModelSerializer):
             'address', 'city', 'pincode', 'blood_group', 'allergies', 'medical_history',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             'insurance_provider', 'insurance_policy_number', 'insurance_coverage_details',
-            'referring_source', 'status', 'is_active', 'created_at'
+            'referring_source', 'status', 'is_active', 'is_new', 'created_at'
         ]
-        read_only_fields = ['id', 'patient_id', 'created_at','clinic']
+        read_only_fields = ['id', 'patient_id', 'created_at','clinic', 'is_new']
 
     def get_full_name(self, obj):
         return obj.get_full_name()
@@ -50,12 +51,13 @@ class PatientListSerializer(serializers.ModelSerializer):
     age = serializers.SerializerMethodField()
     has_treatment_consent = serializers.BooleanField(read_only=True)
     outstanding_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    is_new = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Patient
         fields = [
             'id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 
-            'is_active', 'status', 'created_at', 'has_treatment_consent',
+            'is_active', 'status', 'is_new', 'created_at', 'has_treatment_consent',
             'outstanding_balance'
         ]
 
