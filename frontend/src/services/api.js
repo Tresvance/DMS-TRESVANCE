@@ -102,6 +102,8 @@ export const patientsAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+  getConsents: (id) => api.get(`/patients/${id}/consents/`),
+  createConsent: (id, data) => api.post(`/patients/${id}/consents/`, data),
 };
 
 // ── Patient Documents (X-rays, Scans, Reports) ────────

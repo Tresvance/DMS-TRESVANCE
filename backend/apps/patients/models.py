@@ -174,3 +174,64 @@ class PatientDocument(models.Model):
     @property
     def is_image(self):
         return self.file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+
+
+class PatientConsent(models.Model):
+    """
+    Stores legal consent permissions from patients regarding data sharing, 
+    medical treatment, and marketing.
+    """
+    class ConsentType(models.TextChoices):
+        GENERAL_TREATMENT = 'TREATMENT', 'Medical Treatment'
+        DATA_PRIVACY = 'DATA_PRIVACY', 'Data Privacy (GDPR/HIPAA)'
+        MARKETING = 'MARKETING', 'Marketing Communications'
+        TELEHEALTH = 'TELEHEALTH', 'Telehealth Consent'
+
+    class ConsentStatus(models.TextChoices):
+        GRANTED = 'GRANTED', 'Granted'
+        REVOKED = 'REVOKED', 'Revoked'
+        EXPIRED = 'EXPIRED', 'Expired'
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name='consents'
+    )
+    consent_type = models.CharField(
+        max_length=20, choices=ConsentType.choices
+    )
+    status = models.CharField(
+        max_length=15, choices=ConsentStatus.choices, default=ConsentStatus.GRANTED
+    )
+    is_signed = models.BooleanField(default=False)
+    signer_name = models.CharField(max_length=150, help_text="Full name as typed by signer")
+    
+    # Audit trail
+    signed_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    recorded_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, related_name='recorded_consents'
+    )
+    witness_name = models.CharField(max_length=150, blank=True, help_text="Clinic staff who witnessed sign-off")
+    
+    notes = models.TextField(blank=True)
+    document = models.ForeignKey(
+        'PatientDocument', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='linked_consents',
+        help_text="Reference to scanned physical document if available"
+    )
+
+    class Meta:
+        db_table = 'patient_consents'
+        ordering = ['-signed_at']
+
+    def __str__(self):
+        return f"{self.get_consent_type_display()} - {self.patient.get_full_name()} ({self.status})"
+
+    @property
+    def is_active(self):
+        from django.utils import timezone
+        if self.status != self.ConsentStatus.GRANTED:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True
