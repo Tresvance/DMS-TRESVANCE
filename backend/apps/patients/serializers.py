@@ -16,7 +16,7 @@ class PatientSerializer(serializers.ModelSerializer):
             'address', 'city', 'pincode', 'blood_group', 'allergies', 'medical_history',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             'insurance_provider', 'insurance_policy_number', 'insurance_coverage_details',
-            'referring_source', 'is_active', 'created_at'
+            'referring_source', 'status', 'is_active', 'created_at'
         ]
         read_only_fields = ['id', 'patient_id', 'created_at','clinic']
 
@@ -36,7 +36,7 @@ class PatientListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ['id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 'blood_group', 'is_active', 'created_at']
+        fields = ['id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 'blood_group', 'status', 'is_active', 'created_at']
 
     def get_full_name(self, obj):
         return obj.get_full_name()

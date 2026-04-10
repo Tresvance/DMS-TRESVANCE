@@ -130,7 +130,8 @@ class PatientViewSet(viewsets.ModelViewSet):
                 primary.save()
 
             # 3. Mark Duplicate as inactive and linked
-            duplicate.is_active = False
+            duplicate.status = Patient.PatientStatus.INACTIVE
+            duplicate.is_active = False # Keep for legacy compat
             duplicate.merged_into = primary
             duplicate.save()
 

@@ -35,6 +35,12 @@ class Patient(models.Model):
         WHATSAPP = 'WhatsApp', 'WhatsApp'
         SMS = 'SMS', 'SMS'
 
+    class PatientStatus(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        INACTIVE = 'INACTIVE', 'Inactive'
+        TRANSFERRED = 'TRANSFERRED', 'Transferred'
+        DECEASED = 'DECEASED', 'Deceased'
+
     clinic = models.ForeignKey('clinics.Clinic', on_delete=models.CASCADE, related_name='patients')
     patient_id = models.CharField(max_length=20, unique=True, default=generate_patient_id)
     first_name = models.CharField(max_length=100)
@@ -71,11 +77,11 @@ class Patient(models.Model):
     
     # Referral
     referring_source = models.CharField(max_length=150, blank=True)
-    blood_group = models.CharField(max_length=10, choices=BloodGroup.choices, default=BloodGroup.UNKNOWN)
-    allergies = models.TextField(blank=True)
-    medical_history = models.TextField(blank=True)
-    emergency_contact_name = models.CharField(max_length=150, blank=True)
-    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    status = models.CharField(
+        max_length=20, 
+        choices=PatientStatus.choices, 
+        default=PatientStatus.ACTIVE
+    )
     is_active = models.BooleanField(default=True)
     merged_into = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True, 
