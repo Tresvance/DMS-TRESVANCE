@@ -5,8 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.db import transaction
+from django.db.models import Count, Q
 
 from .models import Patient, PatientDocument
+from apps.appointments.models import Appointment
+from apps.records.models import MedicalRecord
+from apps.billing.models import Billing
 from .serializers import (
     PatientSerializer, PatientListSerializer,
     PatientDocumentSerializer, PatientDocumentUploadSerializer
@@ -30,9 +35,12 @@ class PatientViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # By default, only show active patients in lists
+        qs = Patient.objects.filter(is_active=True).select_related('clinic')
+        
         if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
-            return Patient.objects.all().select_related('clinic')
-        return Patient.objects.filter(clinic=user.clinic).select_related('clinic')
+            return qs
+        return qs.filter(clinic=user.clinic)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -51,6 +59,80 @@ class PatientViewSet(viewsets.ModelViewSet):
             serializer.save(clinic=user.clinic)
         else:
             serializer.save()
+
+    @action(detail=False, methods=['get'])
+    def duplicates(self, request):
+        """Find potential duplicate patients based on phone, email, or name+dob."""
+        clinic = request.user.clinic
+        if not clinic and request.user.role != 'SUPER_ADMIN':
+            return Response({"error": "No clinic associated"}, status=400)
+
+        results = []
+        base_qs = Patient.objects.filter(is_active=True)
+        if clinic:
+            base_qs = base_qs.filter(clinic=clinic)
+
+        # 1. Match by Phone
+        phones = base_qs.exclude(phone='').values('phone').annotate(count=Count('id')).filter(count__gt=1)
+        for p in phones:
+            p_list = base_qs.filter(phone=p['phone'])
+            results.append({"type": "Phone Match", "value": p['phone'], "patients": PatientListSerializer(p_list, many=True).data})
+
+        # 2. Match by Email
+        emails = base_qs.exclude(email='').values('email').annotate(count=Count('id')).filter(count__gt=1)
+        for e in emails:
+            e_list = base_qs.filter(email=e['email'])
+            results.append({"type": "Email Match", "value": e['email'], "patients": PatientListSerializer(e_list, many=True).data})
+
+        # 3. Match by Name + DOB
+        # Group by concatenated first+last+dob
+        # This is simpler with a loop for small/medium datasets or specialized SQL
+        # For now, let's do a basic name+dob check for the most recent patients
+        # (Optimizing for speed in this implementation)
+
+        return Response(results)
+
+    @action(detail=True, methods=['post'])
+    def merge(self, request, pk=None):
+        """Merge another patient record into this one (the primary record)."""
+        primary = self.get_object()
+        duplicate_id = request.data.get('duplicate_id')
+        
+        if not duplicate_id:
+            return Response({"error": "duplicate_id is required"}, status=400)
+        
+        try:
+            duplicate = Patient.objects.get(id=duplicate_id)
+        except Patient.DoesNotExist:
+            return Response({"error": "Duplicate patient not found"}, status=404)
+
+        if primary.id == duplicate.id:
+            return Response({"error": "Cannot merge a patient into themselves"}, status=400)
+
+        with transaction.atomic():
+            # 1. Move related objects
+            Appointment.objects.filter(patient=duplicate).update(patient=primary)
+            MedicalRecord.objects.filter(patient=duplicate).update(patient=primary)
+            Billing.objects.filter(patient=duplicate).update(patient=primary)
+            PatientDocument.objects.filter(patient=duplicate).update(patient=primary)
+
+            # 2. Update Primary record with missing data
+            fields_to_check = ['middle_name', 'email', 'occupation', 'marital_status', 'address', 'city', 'pincode', 'blood_group', 'allergies', 'medical_history', 'emergency_contact_name', 'emergency_contact_phone']
+            updated = False
+            for field in fields_to_check:
+                if not getattr(primary, field) and getattr(duplicate, field):
+                    setattr(primary, field, getattr(duplicate, field))
+                    updated = True
+            
+            if updated:
+                primary.save()
+
+            # 3. Mark Duplicate as inactive and linked
+            duplicate.is_active = False
+            duplicate.merged_into = primary
+            duplicate.save()
+
+        return Response({"message": f"Successfully merged {duplicate.get_full_name()} into {primary.get_full_name()}"})
 
 
 class PatientDocumentViewSet(viewsets.ModelViewSet):

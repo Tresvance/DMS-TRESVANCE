@@ -92,6 +92,8 @@ export const patientsAPI = {
   update: (id, data) => api.put(`/patients/${id}/`, data),
   patch: (id, data) => api.patch(`/patients/${id}/`, data),
   delete: (id) => api.delete(`/patients/${id}/`),
+  getDuplicates: () => api.get('/patients/duplicates/'),
+  merge: (primaryId, duplicateId) => api.post(`/patients/${primaryId}/merge/`, { duplicate_id: duplicateId }),
 };
 
 // ── Patient Documents (X-rays, Scans, Reports) ────────
