@@ -94,6 +94,14 @@ export const patientsAPI = {
   delete: (id) => api.delete(`/patients/${id}/`),
   getDuplicates: () => api.get('/patients/duplicates/'),
   merge: (primaryId, duplicateId) => api.post(`/patients/${primaryId}/merge/`, { duplicate_id: duplicateId }),
+  exportFHIR: (id) => api.get(`/patients/${id}/export_fhir/`, { responseType: 'blob' }),
+  importFHIR: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/patients/import_fhir/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 };
 
 // ── Patient Documents (X-rays, Scans, Reports) ────────
