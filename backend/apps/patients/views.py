@@ -7,16 +7,19 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Exists, OuterRef, Value, Sum
+from django.db.models.functions import Coalesce
+from django.db import models
 
-from .models import Patient, PatientDocument
+from .models import Patient, PatientDocument, PatientConsent
 from apps.appointments.models import Appointment
 from apps.records.models import MedicalRecord
 from apps.billing.models import Billing
 from apps.records.fhir_utils import FHIRMapper
 from .serializers import (
     PatientSerializer, PatientListSerializer,
-    PatientDocumentSerializer, PatientDocumentUploadSerializer
+    PatientDocumentSerializer, PatientDocumentUploadSerializer,
+    PatientConsentSerializer
 )
 from apps.users.permissions import IsAdminOrReception
 
@@ -40,6 +43,17 @@ class PatientViewSet(viewsets.ModelViewSet):
         # By default, only show active patients in lists
         qs = Patient.objects.filter(is_active=True).select_related('clinic')
         
+        # Annotate with whether they have an active treatment consent
+        qs = qs.annotate(
+            has_treatment_consent=Exists(
+                PatientConsent.objects.filter(
+                    patient=OuterRef('pk'),
+                    consent_type='TREATMENT',
+                    status='GRANTED'
+                )
+            )
+        )
+
         if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
             return qs
         return qs.filter(clinic=user.clinic)
@@ -169,6 +183,27 @@ class PatientViewSet(viewsets.ModelViewSet):
             }, status=201)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+    @action(detail=True, methods=['get', 'post'])
+    def consents(self, request, pk=None):
+        """Manage patient consent records."""
+        patient = self.get_object()
+        if request.method == 'GET':
+            consents = PatientConsent.objects.filter(patient=patient)
+            serializer = PatientConsentSerializer(consents, many=True)
+            return Response(serializer.data)
+            
+        elif request.method == 'POST':
+            serializer = PatientConsentSerializer(data=request.data)
+            if serializer.is_valid():
+                # Add audit info
+                serializer.save(
+                    patient=patient,
+                    recorded_by=request.user,
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
 
 
 class PatientDocumentViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,20 @@
 from rest_framework import serializers
-from .models import Patient, PatientDocument
+from .models import Patient, PatientDocument, PatientConsent
+
+
+class PatientConsentSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_consent_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    recorded_by_name = serializers.CharField(source='recorded_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = PatientConsent
+        fields = [
+            'id', 'patient', 'consent_type', 'type_display', 'status', 'status_display',
+            'is_signed', 'signer_name', 'signed_at', 'expires_at', 'ip_address',
+            'recorded_by', 'recorded_by_name', 'witness_name', 'notes', 'document'
+        ]
+        read_only_fields = ['id', 'patient', 'signed_at', 'recorded_by', 'ip_address']
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -33,10 +48,22 @@ class PatientSerializer(serializers.ModelSerializer):
 class PatientListSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
+    has_treatment_consent = serializers.BooleanField(read_only=True)
+    outstanding_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Patient
-        fields = ['id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 'blood_group', 'status', 'is_active', 'created_at']
+        fields = [
+            'id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 
+            'is_active', 'status', 'created_at', 'has_treatment_consent',
+            'outstanding_balance'
+        ]
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+    def get_age(self, obj):
+        return obj.age
 
     def get_full_name(self, obj):
         return obj.get_full_name()

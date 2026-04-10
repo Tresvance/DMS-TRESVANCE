@@ -6,8 +6,13 @@ import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, StatusBadge } fr
 import AdvancedSearch from '../components/AdvancedSearch';
 import MergePatientDialog from '../components/MergePatientDialog';
 import HistoryImportModal from '../components/HistoryImportModal';
-import { UserPlus, Edit2, Trash2, Eye, Users, FileImage, GitMerge, SearchCode, Download, Upload } from 'lucide-react';
+import { 
+  UserPlus, Edit2, Trash2, Eye, Users, FileImage, GitMerge, 
+  SearchCode, Download, Upload, ShieldCheck, ShieldAlert, 
+  FileSignature, AlertCircle, MoreVertical, IndianRupee 
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConsentManagerModal from '../components/ConsentManagerModal';
 
 export default function Patients() {
   const { user } = useAuth();
@@ -21,6 +26,9 @@ export default function Patients() {
   const [duplicateClusters, setDuplicateClusters] = useState([]);
   const [findingDuplicates, setFindingDuplicates] = useState(false);
   const [statusMenuId, setStatusMenuId] = useState(null);
+  const [consentPatient, setConsentPatient] = useState(null);
+  const [actionMenuId, setActionMenuId] = useState(null);
+  const [consentMenuId, setConsentMenuId] = useState(null);
   const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
 
   const loadPatients = useCallback(async () => {
@@ -178,14 +186,20 @@ export default function Patients() {
         {loading ? <Spinner /> : patients.length === 0 ? (
           <EmptyState message="No patients found" icon={Users} />
         ) : (
-          <Table headers={['Patient ID', 'Name', 'Gender', 'Phone', 'Status', 'Registered', 'Actions']}>
+          <div className="min-h-[450px]">
+            <Table headers={['Patient ID', 'Name', 'Gender', 'Phone', 'Status', 'Consent', 'Registered', 'Actions']}>
             {patients.map(p => {
               const statusCfg = getStatusConfig(p.status || 'ACTIVE');
               return (
                 <tr key={p.id} className="hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors">
                   <td className="table-cell font-mono text-[10px] text-blue-600 font-bold bg-blue-50/30 px-3 rounded-md">{p.patient_id}</td>
                   <td className="table-cell py-4">
-                    <span className="font-bold text-gray-900">{p.full_name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900">{p.full_name}</span>
+                      {!p.has_treatment_consent && (
+                        <AlertCircle className="w-4 h-4 text-amber-500" title="Missing Treatment Consent" />
+                      )}
+                    </div>
                   </td>
                   <td className="table-cell">
                     <span className="text-xs text-gray-500 font-medium">{p.gender} • {p.age} yrs</span>
@@ -229,33 +243,96 @@ export default function Patients() {
                     </div>
                   </td>
                   <td className="table-cell">
+                    <div className="relative min-w-[100px]">
+                      <button 
+                        onClick={() => setConsentMenuId(consentMenuId === p.id ? null : p.id)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase ring-1 ring-inset transition-all active:scale-95 ${p.has_treatment_consent ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-amber-50 text-amber-700 ring-amber-100'}`}
+                      >
+                        {p.has_treatment_consent ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                        {p.has_treatment_consent ? 'Granted' : 'Missing'}
+                      </button>
+
+                      {consentMenuId === p.id && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setConsentMenuId(null)} />
+                          <div className="absolute top-1/2 -translate-y-1/2 left-0 z-50 bg-white shadow-2xl border border-gray-100 rounded-xl p-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in-95 duration-100 ring-4 ring-white">
+                            <button
+                              onClick={() => { setConsentPatient(p); setConsentMenuId(null); }}
+                              className="px-2 py-1 text-[10px] font-black text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              Manager
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await patientsAPI.createConsent(p.id, { 
+                                    consent_type: 'TREATMENT', 
+                                    is_signed: true, 
+                                    signer_name: p.full_name,
+                                    status: 'GRANTED'
+                                  });
+                                  toast.success('Treatment consent granted');
+                                  loadPatients();
+                                } catch { toast.error('Failed to update consent'); }
+                                setConsentMenuId(null);
+                              }}
+                              className="px-2 py-1 text-[10px] font-black text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              Quick Grant
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="table-cell">
                     <div className="flex flex-col">
                       <span className="text-xs font-bold text-gray-700">{new Date(p.created_at).toLocaleDateString()}</span>
                       <span className="text-[10px] text-gray-400 font-medium">{new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </td>
                 <td className="table-cell">
-                  <div className="flex items-center gap-2">
-                    <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title="Documents">
+                  <div className="relative flex items-center justify-end gap-1">
+                    <Link to={`/patients/${p.id}/edit`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Patient">
+                      <Edit2 className="w-4 h-4" />
+                    </Link>
+
+                    <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Documents/X-rays">
                       <FileImage className="w-4 h-4" />
                     </Link>
-                    {canEdit && (
-                      <Link to={`/patients/${p.id}/edit`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit">
-                        <Edit2 className="w-4 h-4" />
-                      </Link>
-                    )}
-                    {canEdit && (
-                      <button onClick={() => setMergeTarget(p)} className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg" title="Consolidate/Merge">
-                        <GitMerge className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button onClick={() => handleExport(p)} className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg" title="Export FHIR (JSON)">
-                      <Download className="w-4 h-4" />
+
+                    <button 
+                      onClick={() => setActionMenuId(actionMenuId === p.id ? null : p.id)}
+                      className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
+                    >
+                      <MoreVertical className="w-5 h-5" />
                     </button>
-                    {canEdit && (
-                      <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+
+                    {actionMenuId === p.id && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setActionMenuId(null)} />
+                        <div className="absolute right-10 top-1/2 -translate-y-1/2 z-50 bg-white shadow-2xl border border-gray-100 rounded-xl p-1 flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-100 ring-2 ring-white">
+                          <button onClick={() => { setConsentPatient(p); setActionMenuId(null); }} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Consent Manager">
+                            <FileSignature className="w-4 h-4" />
+                          </button>
+
+                          {canEdit && (
+                            <button onClick={() => { setMergeTarget(p); setActionMenuId(null); }} className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Consolidate/Merge">
+                              <GitMerge className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          <button onClick={() => { handleExport(p); setActionMenuId(null); }} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Export FHIR">
+                            <Download className="w-4 h-4" />
+                          </button>
+                          
+                          <div className="w-px h-4 bg-gray-100 mx-1" />
+
+                          <button onClick={() => { setDeleteTarget(p); setActionMenuId(null); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete record">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
                 </td>
@@ -263,6 +340,7 @@ export default function Patients() {
             );
           })}
           </Table>
+          </div>
         )}
       </div>
 
@@ -286,6 +364,12 @@ export default function Patients() {
         loading={deleting}
         title="Delete Patient"
         message={`Are you sure you want to delete ${deleteTarget?.full_name}? This action cannot be undone.`}
+      />
+
+      <ConsentManagerModal
+        isOpen={!!consentPatient}
+        onClose={() => setConsentPatient(null)}
+        patient={consentPatient}
       />
     </div>
   );
