@@ -205,6 +205,82 @@ class PatientViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=201)
             return Response(serializer.errors, status=400)
 
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        """Returns demographic and growth analytics for the current clinic."""
+        from django.utils import timezone
+        import datetime
+        import collections
+
+        clinic = request.user.clinic
+        if not clinic and request.user.role != 'SUPER_ADMIN':
+            return Response({"error": "Unauthorized"}, status=403)
+
+        base_qs = Patient.objects.filter(is_active=True)
+        if clinic:
+            base_qs = base_qs.filter(clinic=clinic)
+
+        # 1. Gender Distribution
+        gender_data = base_qs.values('gender').annotate(count=Count('id'))
+        gender_dist = {item['gender']: item['count'] for item in gender_data}
+
+        # 2. Age Distribution
+        today = datetime.date.today()
+        # bucketize: 0-12, 13-18, 19-35, 36-60, 61+
+        age_buckets = {
+            'Children (0-12)': 0,
+            'Teens (13-18)':  0,
+            'Young Adults (19-35)': 0,
+            'Adults (36-60)':  0,
+            'Seniors (61+)':   0,
+        }
+
+        for p in base_qs.only('date_of_birth'):
+            age = today.year - p.date_of_birth.year - ((today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day))
+            if age <= 12: age_buckets['Children (0-12)'] += 1
+            elif age <= 18: age_buckets['Teens (13-18)'] += 1
+            elif age <= 35: age_buckets['Young Adults (19-35)'] += 1
+            elif age <= 60: age_buckets['Adults (36-60)'] += 1
+            else: age_buckets['Seniors (61+)'] += 1
+
+        # 3. Clinical Segments
+        segments = {
+            'VIP': base_qs.filter(is_vip=True).count(),
+            'High Risk': base_qs.filter(is_high_risk=True).count(),
+            'Standard': base_qs.filter(is_vip=False, is_high_risk=False).count(),
+            'New (Last 30d)': base_qs.filter(created_at__gte=timezone.now() - datetime.timedelta(days=30)).count()
+        }
+
+        # 4. Growth Trends (Last 6 Months)
+        growth = []
+        for i in range(5, -1, -1):
+            # Calculate month and year manually to avoid dateutil
+            year = today.year
+            month = today.month - i
+            while month <= 0:
+                month += 12
+                year -= 1
+            
+            month_start = datetime.date(year, month, 1)
+            # Find first day of next month
+            if month == 12:
+                next_month_start = datetime.date(year + 1, 1, 1)
+            else:
+                next_month_start = datetime.date(year, month + 1, 1)
+            
+            count = base_qs.filter(created_at__date__gte=month_start, created_at__date__lt=next_month_start).count()
+            growth.append({
+                'month': month_start.strftime('%b %Y'),
+                'count': count
+            })
+
+        return Response({
+            'total_patients': base_qs.count(),
+            'gender_dist': gender_dist,
+            'age_dist': age_buckets,
+            'segments': segments,
+            'growth_trends': growth
+        })
 
 class PatientDocumentViewSet(viewsets.ModelViewSet):
     """

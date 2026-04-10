@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, Building2, UserPlus, Calendar,
   FileText, Pill, CreditCard, LogOut, Menu, X, Clock,
-  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt
+  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt,TrendingUp
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -35,6 +35,7 @@ const navConfig = {
     { to: '/medicines',            icon: Pill,            label: 'Medicines' },
     { to: '/billing',              icon: CreditCard,      label: 'Billing' },
     { to: '/clinic/payments',      icon: Receipt,         label: 'Payment History' },
+    { to: '/clinic/reports',       icon: TrendingUp,      label: 'Patient Analytics' },
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],

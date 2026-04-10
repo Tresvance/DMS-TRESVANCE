@@ -22,6 +22,7 @@ import TicketDetail         from './pages/TicketDetail';
 import SupportDashboard     from './pages/SupportDashboard';
 import PaymentHistory       from './pages/PaymentHistory';
 import Shifts               from './pages/Shifts';
+import PatientReports       from './pages/PatientReports';
 import Layout               from './components/Layout';
 
 
@@ -70,6 +71,7 @@ function AppRoutes() {
         <Route path="clinic/dashboard" element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><ClinicAdminDashboard /></ProtectedRoute>} />
         <Route path="clinic/staff"     element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><Users /></ProtectedRoute>} />
         <Route path="clinic/shifts"    element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><Shifts /></ProtectedRoute>} />
+        <Route path="clinic/reports"   element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><PatientReports /></ProtectedRoute>} />
         <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
 
 
