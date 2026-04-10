@@ -1,3 +1,4 @@
+import json
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,6 +13,7 @@ from .models import Patient, PatientDocument
 from apps.appointments.models import Appointment
 from apps.records.models import MedicalRecord
 from apps.billing.models import Billing
+from apps.records.fhir_utils import FHIRMapper
 from .serializers import (
     PatientSerializer, PatientListSerializer,
     PatientDocumentSerializer, PatientDocumentUploadSerializer
@@ -133,6 +135,39 @@ class PatientViewSet(viewsets.ModelViewSet):
             duplicate.save()
 
         return Response({"message": f"Successfully merged {duplicate.get_full_name()} into {primary.get_full_name()}"})
+
+    @action(detail=True, methods=['get'])
+    def export_fhir(self, request, pk=None):
+        """Export patient medical history in FHIR JSON format."""
+        patient = self.get_object()
+        bundle = FHIRMapper.export_patient_bundle(patient)
+        filename = f"{patient.patient_id}_history.json"
+        
+        response = Response(bundle)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=False, methods=['post'], parser_classes=[MultiPartParser, FormParser])
+    def import_fhir(self, request):
+        """Import patient history from a FHIR JSON file."""
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({"error": "No file uploaded"}, status=400)
+            
+        try:
+            bundle_data = json.load(file_obj)
+            clinic = request.user.clinic
+            if not clinic:
+                return Response({"error": "No clinic associated with user"}, status=400)
+                
+            patient = FHIRMapper.import_patient_bundle(bundle_data, clinic)
+            return Response({
+                "message": "Patient imported successfully",
+                "patient_id": patient.patient_id,
+                "id": patient.id
+            }, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
 
 class PatientDocumentViewSet(viewsets.ModelViewSet):

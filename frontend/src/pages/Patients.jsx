@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, StatusBadge } from '../components/UI';
 import AdvancedSearch from '../components/AdvancedSearch';
 import MergePatientDialog from '../components/MergePatientDialog';
-import { UserPlus, Edit2, Trash2, Eye, Users, FileImage, GitMerge, SearchCode } from 'lucide-react';
+import HistoryImportModal from '../components/HistoryImportModal';
+import { UserPlus, Edit2, Trash2, Eye, Users, FileImage, GitMerge, SearchCode, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Patients() {
@@ -16,6 +17,7 @@ export default function Patients() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [mergeTarget, setMergeTarget] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [duplicateClusters, setDuplicateClusters] = useState([]);
   const [findingDuplicates, setFindingDuplicates] = useState(false);
   const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
@@ -56,6 +58,22 @@ export default function Patients() {
     finally { setFindingDuplicates(false); }
   };
 
+  const handleExport = async (patient) => {
+    try {
+      const response = await patientsAPI.exportFHIR(patient.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${patient.patient_id}_history.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('History exported successfully');
+    } catch {
+      toast.error('Failed to export history');
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -63,6 +81,13 @@ export default function Patients() {
         subtitle={`${patients.length} total`}
         action={canEdit && (
           <div className="flex gap-2">
+            <button 
+              onClick={() => setImportOpen(true)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import FHIR
+            </button>
             <button 
               onClick={findDuplicates} 
               disabled={findingDuplicates}
@@ -163,6 +188,9 @@ export default function Patients() {
                         <GitMerge className="w-4 h-4" />
                       </button>
                     )}
+                    <button onClick={() => handleExport(p)} className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg" title="Export FHIR (JSON)">
+                      <Download className="w-4 h-4" />
+                    </button>
                     {canEdit && (
                       <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
                         <Trash2 className="w-4 h-4" />
@@ -181,6 +209,12 @@ export default function Patients() {
         onClose={() => setMergeTarget(null)} 
         primaryPatient={mergeTarget} 
         onMerged={loadPatients} 
+      />
+
+      <HistoryImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadPatients}
       />
 
       <ConfirmDialog
