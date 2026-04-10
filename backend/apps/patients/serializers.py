@@ -32,7 +32,7 @@ class PatientSerializer(serializers.ModelSerializer):
             'address', 'city', 'pincode', 'blood_group', 'allergies', 'medical_history',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             'insurance_provider', 'insurance_policy_number', 'insurance_coverage_details',
-            'referring_source', 'status', 'is_active', 'is_new', 'created_at'
+            'referring_source', 'status', 'is_active', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'created_at'
         ]
         read_only_fields = ['id', 'patient_id', 'created_at','clinic', 'is_new']
 
@@ -57,7 +57,7 @@ class PatientListSerializer(serializers.ModelSerializer):
         model = Patient
         fields = [
             'id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 
-            'is_active', 'status', 'is_new', 'created_at', 'has_treatment_consent',
+            'is_active', 'status', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'created_at', 'has_treatment_consent',
             'outstanding_balance'
         ]
 

@@ -5,7 +5,7 @@ import {
   PageHeader, Table, Spinner, EmptyState, ConfirmDialog,
   StatusBadge, Modal, FormField, SearchBar
 } from '../components/UI';
-import { Plus, Edit2, Trash2, Calendar, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, Loader2, Star, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
@@ -159,14 +159,25 @@ export default function Appointments() {
             {appointments.map(a => (
               <tr key={a.id} className="hover:bg-gray-50">
                 <td className="table-cell">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-gray-900">{a.patient_name}</span>
+                      {a.patient_is_vip && (
+                        <div className="flex items-center bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded text-[10px] font-black border border-amber-200">
+                          <Star className="w-3 h-3 fill-amber-500" />
+                        </div>
+                      )}
                       {a.is_first_visit && (
                         <span className="px-1.5 py-0.5 text-[9px] font-black bg-indigo-600 text-white rounded-md tracking-tight uppercase">First Visit</span>
                       )}
                     </div>
-                    <span className="text-[10px] text-gray-500 font-mono uppercase">{a.patient_id_code}</span>
+                    {a.patient_is_high_risk && (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 uppercase tracking-tighter">
+                        <AlertCircle className="w-3 h-3" />
+                        Risk: {a.patient_risk_details || 'Critical'}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-gray-400 font-mono uppercase">{a.patient_id_code}</span>
                   </div>
                 </td>
                 <td className="table-cell">{a.doctor_name}</td>

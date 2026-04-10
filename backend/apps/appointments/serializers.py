@@ -14,9 +14,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'clinic', 'clinic_name', 'patient', 'patient_name', 'patient_id_code',
             'doctor', 'doctor_name', 'appointment_date', 'appointment_time',
-            'reason', 'status', 'notes', 'is_first_visit', 'created_at'
+            'reason', 'status', 'notes', 'is_first_visit', 
+            'patient_is_vip', 'patient_is_high_risk', 'patient_risk_details',
+            'created_at'
         ]
-        read_only_fields = ['id', 'created_at', 'clinic', 'is_first_visit'] 
+        read_only_fields = ['id', 'created_at', 'clinic', 'is_first_visit', 'patient_is_vip', 'patient_is_high_risk'] 
     def get_patient_name(self, obj):
         return obj.patient.get_full_name()
 
@@ -28,3 +30,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def get_clinic_name(self, obj):
         return obj.clinic.clinic_name if obj.clinic else None
+
+    patient_is_vip         = serializers.BooleanField(source='patient.is_vip', read_only=True)
+    patient_is_high_risk   = serializers.BooleanField(source='patient.is_high_risk', read_only=True)
+    patient_risk_details   = serializers.CharField(source='patient.risk_details', read_only=True)

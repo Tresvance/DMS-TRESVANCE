@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { authAPI, appointmentsAPI } from '../services/api';
 import { StatCard, Spinner, StatusBadge, Table } from '../components/UI';
-import { Calendar, Users, UserPlus, CreditCard, TrendingUp } from 'lucide-react';
+import { Calendar, Users, UserPlus, CreditCard, TrendingUp, Star, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ReceptionDashboard() {
@@ -63,10 +63,21 @@ export default function ReceptionDashboard() {
             {todayAppts.map(appt => (
               <tr key={appt.id} className="hover:bg-gray-50">
                 <td className="table-cell">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">{appt.patient_name}</span>
-                    {appt.is_first_visit && (
-                      <span className="px-1 py-0.5 text-[8px] font-black bg-indigo-100 text-indigo-700 rounded-md uppercase tracking-tight">First Visit</span>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900">{appt.patient_name}</span>
+                      {appt.patient_is_vip && (
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      )}
+                      {appt.is_first_visit && (
+                        <span className="px-1 py-0.5 text-[8px] font-black bg-indigo-100 text-indigo-700 rounded-md uppercase tracking-tight">First Visit</span>
+                      )}
+                    </div>
+                    {appt.patient_is_high_risk && (
+                      <div className="flex items-center gap-1 text-[8px] font-bold text-red-600">
+                        <AlertCircle className="w-2.5 h-2.5" />
+                        HIGH RISK
+                      </div>
                     )}
                   </div>
                 </td>

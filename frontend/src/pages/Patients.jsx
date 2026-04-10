@@ -9,7 +9,7 @@ import HistoryImportModal from '../components/HistoryImportModal';
 import { 
   UserPlus, Edit2, Trash2, Eye, Users, FileImage, GitMerge, 
   SearchCode, Download, Upload, ShieldCheck, ShieldAlert, 
-  FileSignature, AlertCircle, MoreVertical, IndianRupee 
+  FileSignature, AlertCircle, MoreVertical, IndianRupee, Star 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConsentManagerModal from '../components/ConsentManagerModal';
@@ -199,13 +199,30 @@ export default function Patients() {
                 <tr key={p.id} className="hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors">
                   <td className="table-cell font-mono text-[10px] text-blue-600 font-bold bg-blue-50/30 px-3 rounded-md">{p.patient_id}</td>
                   <td className="table-cell py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900">{p.full_name}</span>
-                      {p.is_new && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-black bg-blue-600 text-white rounded-md tracking-tighter uppercase animate-pulse">NEW</span>
-                      )}
-                      {!p.has_treatment_consent && (
-                        <AlertCircle className="w-4 h-4 text-amber-500" title="Missing Treatment Consent" />
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-900">{p.full_name}</span>
+                        {p.is_vip && (
+                          <div className="flex items-center bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded text-[10px] font-black border border-amber-200">
+                            <Star className="w-3 h-3 fill-amber-500 mr-1" />
+                            VIP
+                          </div>
+                        )}
+                        {p.is_new && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-black bg-blue-600 text-white rounded-md tracking-tighter uppercase animate-pulse">NEW</span>
+                        )}
+                        {!p.has_treatment_consent && (
+                          <AlertCircle className="w-4 h-4 text-amber-500" title="Missing Treatment Consent" />
+                        )}
+                      </div>
+                      {p.is_high_risk && (
+                        <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-100 rounded-lg max-w-xs transition-all hover:shadow-sm">
+                          <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-[10px] text-red-700 leading-tight">
+                            <span className="font-black uppercase mr-1">High Risk:</span>
+                            {p.risk_details || 'Medical Complications'}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </td>
