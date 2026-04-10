@@ -77,6 +77,10 @@ class Patient(models.Model):
     emergency_contact_name = models.CharField(max_length=150, blank=True)
     emergency_contact_phone = models.CharField(max_length=20, blank=True)
     is_active = models.BooleanField(default=True)
+    merged_into = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='merged_duplicates', help_text='The primary record this patient was merged into'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

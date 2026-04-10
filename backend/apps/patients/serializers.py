@@ -36,7 +36,7 @@ class PatientListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ['id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 'blood_group', 'created_at']
+        fields = ['id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 'blood_group', 'is_active', 'created_at']
 
     def get_full_name(self, obj):
         return obj.get_full_name()
