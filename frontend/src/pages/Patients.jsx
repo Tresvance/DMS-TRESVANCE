@@ -163,7 +163,12 @@ export default function Patients() {
                         {p.full_name[0]}
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-gray-900">{p.full_name}</div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-sm font-bold text-gray-900">{p.full_name}</div>
+                          {p.is_new && (
+                            <span className="px-1 py-0.5 text-[8px] font-black bg-blue-600 text-white rounded leading-none uppercase tracking-wider">NEW</span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500">{p.patient_id} • {p.phone || 'No phone'}</div>
                       </div>
                       <button 
@@ -196,6 +201,9 @@ export default function Patients() {
                   <td className="table-cell py-4">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-gray-900">{p.full_name}</span>
+                      {p.is_new && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-black bg-blue-600 text-white rounded-md tracking-tighter uppercase animate-pulse">NEW</span>
+                      )}
                       {!p.has_treatment_consent && (
                         <AlertCircle className="w-4 h-4 text-amber-500" title="Missing Treatment Consent" />
                       )}

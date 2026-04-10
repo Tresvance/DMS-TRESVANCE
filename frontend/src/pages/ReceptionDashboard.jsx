@@ -62,7 +62,14 @@ export default function ReceptionDashboard() {
           <Table headers={['Patient', 'Doctor', 'Time', 'Reason', 'Status']}>
             {todayAppts.map(appt => (
               <tr key={appt.id} className="hover:bg-gray-50">
-                <td className="table-cell font-medium">{appt.patient_name}</td>
+                <td className="table-cell">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900">{appt.patient_name}</span>
+                    {appt.is_first_visit && (
+                      <span className="px-1 py-0.5 text-[8px] font-black bg-indigo-100 text-indigo-700 rounded-md uppercase tracking-tight">First Visit</span>
+                    )}
+                  </div>
+                </td>
                 <td className="table-cell">{appt.doctor_name}</td>
                 <td className="table-cell">{appt.appointment_time?.slice(0, 5)}</td>
                 <td className="table-cell text-gray-500 max-w-xs truncate">{appt.reason}</td>

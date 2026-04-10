@@ -1,5 +1,7 @@
 import uuid
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
 
 def generate_patient_id():
@@ -108,6 +110,11 @@ class Patient(models.Model):
         return today.year - self.date_of_birth.year - (
             (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
         )
+
+    @property
+    def is_new(self):
+        """Returns True if the patient was created within the last 7 days."""
+        return self.created_at >= timezone.now() - timedelta(days=7)
 
 
 def patient_document_path(instance, filename):
