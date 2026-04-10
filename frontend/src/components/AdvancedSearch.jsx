@@ -11,6 +11,7 @@ export default function AdvancedSearch({ onSearch, onClear, placeholder = "Globa
     email: '',
     date_of_birth: '',
     gender: '',
+    status: '',
   });
 
   const handleGlobalChange = (e) => {
@@ -27,7 +28,7 @@ export default function AdvancedSearch({ onSearch, onClear, placeholder = "Globa
 
   const clearAll = () => {
     setGlobalSearch('');
-    const emptyFilters = { patient_id: '', phone: '', email: '', date_of_birth: '', gender: '' };
+    const emptyFilters = { patient_id: '', phone: '', email: '', date_of_birth: '', gender: '', status: '' };
     setFilters(emptyFilters);
     onClear();
   };
@@ -110,7 +111,7 @@ export default function AdvancedSearch({ onSearch, onClear, placeholder = "Globa
             </FormField>
             <FormField label="Gender">
               <select
-                className="input-field py-1.5 text-xs"
+                className="input-field py-1.5 text-xs text-red-500"
                 value={filters.gender}
                 onChange={handleFilterChange('gender')}
               >
@@ -118,6 +119,19 @@ export default function AdvancedSearch({ onSearch, onClear, placeholder = "Globa
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
+              </select>
+            </FormField>
+            <FormField label="Status">
+              <select
+                className="input-field py-1.5 text-xs"
+                value={filters.status}
+                onChange={handleFilterChange('status')}
+              >
+                <option value="">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="TRANSFERRED">Transferred</option>
+                <option value="DECEASED">Deceased</option>
               </select>
             </FormField>
           </div>

@@ -20,6 +20,7 @@ export default function Patients() {
   const [importOpen, setImportOpen] = useState(false);
   const [duplicateClusters, setDuplicateClusters] = useState([]);
   const [findingDuplicates, setFindingDuplicates] = useState(false);
+  const [statusMenuId, setStatusMenuId] = useState(null);
   const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
 
   const loadPatients = useCallback(async () => {
@@ -56,6 +57,24 @@ export default function Patients() {
       }
     } catch { toast.error('Failed to scan for duplicates'); }
     finally { setFindingDuplicates(false); }
+  };
+
+  const handleStatusChange = async (patient, newStatus) => {
+    try {
+      await patientsAPI.patch(patient.id, { status: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
+      loadPatients();
+    } catch { toast.error('Failed to update status'); }
+  };
+
+  const getStatusConfig = (status) => {
+    switch (status) {
+      case 'ACTIVE': return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Active' };
+      case 'INACTIVE': return { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Inactive' };
+      case 'TRANSFERRED': return { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Transferred' };
+      case 'DECEASED': return { bg: 'bg-red-100', text: 'text-red-700', label: 'Deceased' };
+      default: return { bg: 'bg-gray-100', text: 'text-gray-700', label: status };
+    }
   };
 
   const handleExport = async (patient) => {
@@ -159,20 +178,62 @@ export default function Patients() {
         {loading ? <Spinner /> : patients.length === 0 ? (
           <EmptyState message="No patients found" icon={Users} />
         ) : (
-          <Table headers={['Patient ID', 'Name', 'Gender', 'Age', 'Phone', 'Blood Group', 'Registered', 'Actions']}>
-            {patients.map(p => (
-              <tr key={p.id} className="hover:bg-gray-50">
-                <td className="table-cell font-mono text-xs text-blue-600 font-medium">{p.patient_id}</td>
-                <td className="table-cell font-medium">{p.full_name}</td>
-                <td className="table-cell">{p.gender}</td>
-                <td className="table-cell">{p.age} yrs</td>
-                <td className="table-cell">{p.phone}</td>
-                <td className="table-cell">
-                  <span className="badge-blue">{p.blood_group}</span>
-                </td>
-                <td className="table-cell text-gray-400 text-xs">
-                  {new Date(p.created_at).toLocaleDateString()}
-                </td>
+          <Table headers={['Patient ID', 'Name', 'Gender', 'Phone', 'Status', 'Registered', 'Actions']}>
+            {patients.map(p => {
+              const statusCfg = getStatusConfig(p.status || 'ACTIVE');
+              return (
+                <tr key={p.id} className="hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors">
+                  <td className="table-cell font-mono text-[10px] text-blue-600 font-bold bg-blue-50/30 px-3 rounded-md">{p.patient_id}</td>
+                  <td className="table-cell py-4">
+                    <span className="font-bold text-gray-900">{p.full_name}</span>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-xs text-gray-500 font-medium">{p.gender} • {p.age} yrs</span>
+                  </td>
+                  <td className="table-cell font-medium text-gray-600">{p.phone}</td>
+                  <td className="table-cell">
+                    <div className="relative min-w-[80px]">
+                      <button 
+                        onClick={() => setStatusMenuId(statusMenuId === p.id ? null : p.id)}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset transition-all active:scale-95 ${statusCfg.bg} ${statusCfg.text} ring-black/5 cursor-pointer whitespace-nowrap`}
+                      >
+                        {statusCfg.label}
+                      </button>
+                      
+                      {canEdit && statusMenuId === p.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setStatusMenuId(null)}
+                          />
+                          <div className="absolute top-1/2 -translate-y-1/2 left-0 z-50 bg-white shadow-2xl border border-gray-100 rounded-xl p-0.5 flex items-center gap-0.5 animate-in fade-in zoom-in-95 duration-100 ring-4 ring-white">
+                            {[
+                              { id: 'ACTIVE', label: 'Active', color: 'text-emerald-600', bg: 'hover:bg-emerald-50' },
+                              { id: 'TRANSFERRED', label: 'Transferred', color: 'text-blue-600', bg: 'hover:bg-blue-50' },
+                              { id: 'DECEASED', label: 'Deceased', color: 'text-red-600', bg: 'hover:bg-red-50' }
+                            ].map(st => (
+                              <button
+                                key={st.id}
+                                onClick={() => {
+                                  handleStatusChange(p, st.id);
+                                  setStatusMenuId(null);
+                                }}
+                                className={`px-2 py-1 text-[10px] font-black ${st.color} ${st.bg} rounded-lg transition-colors whitespace-nowrap`}
+                              >
+                                {st.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-700">{new Date(p.created_at).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">{new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </td>
                 <td className="table-cell">
                   <div className="flex items-center gap-2">
                     <Link to={`/patients/${p.id}/documents`} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title="Documents">
@@ -199,7 +260,8 @@ export default function Patients() {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </Table>
         )}
       </div>
