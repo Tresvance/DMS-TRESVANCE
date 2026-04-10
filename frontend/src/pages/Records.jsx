@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { recordsAPI, patientsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
-import { Plus, Edit2, Trash2, FileText, Loader2 } from 'lucide-react';
+import ClinicalNotesManager from '../components/ClinicalNotesManager';
+import { Plus, Edit2, Trash2, FileText, Loader2, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = { patient: '', doctor: '', diagnosis: '', treatment_plan: '', prescription: '', procedures_done: '', next_visit_date: '' };
@@ -20,6 +21,7 @@ export default function Records() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [notesTarget, setNotesTarget] = useState(null);
   const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'DOCTOR'].includes(user?.role);
 
   const fc = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -87,8 +89,9 @@ export default function Records() {
                 {canEdit && (
                   <td className="table-cell">
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(r)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => setDeleteTarget(r)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => setNotesTarget(r)} title="Clinical Notes" className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><MessageSquare className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(r)} title="Edit Record" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => setDeleteTarget(r)} title="Delete Record" className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 )}
@@ -145,6 +148,24 @@ export default function Records() {
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} loading={deleting}
         title="Delete Record" message="Delete this medical record permanently?" />
+
+      <Modal isOpen={!!notesTarget} onClose={() => { setNotesTarget(null); load(); }} title="Clinical Visit Notes" size="xl">
+        {notesTarget && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <div>
+                <h3 className="font-bold text-blue-900">{notesTarget.patient_name}</h3>
+                <p className="text-sm text-blue-700">{notesTarget.diagnosis}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Visit Date</p>
+                <p className="font-semibold text-blue-800">{new Date(notesTarget.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+            <ClinicalNotesManager recordId={notesTarget.id} />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

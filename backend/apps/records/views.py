@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import MedicalRecord
-from .serializers import MedicalRecordSerializer
+from .models import MedicalRecord, ClinicalNote
+from .serializers import MedicalRecordSerializer, ClinicalNoteSerializer
 from apps.users.permissions import IsAdminOrDoctor
 
 
@@ -32,5 +32,30 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
-        serializer.save(clinic=clinic, doctor=user if user.role == 'DOCTOR' else serializer.validated_data.get('doctor'))
+        
+        # Determine the clinic
+        if user.role == 'SUPER_ADMIN':
+            clinic = serializer.validated_data.get('clinic')
+        else:
+            clinic = user.clinic
+            
+        # Determine the doctor
+        if user.role == 'DOCTOR':
+            doctor = user
+        else:
+            doctor = serializer.validated_data.get('doctor')
+            
+        serializer.save(clinic=clinic, doctor=doctor)
+
+
+class ClinicalNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = ClinicalNoteSerializer
+    permission_classes = [IsAdminOrDoctor]
+
+    def get_queryset(self):
+        return ClinicalNote.objects.filter(
+            medical_record__clinic=self.request.user.clinic
+        ).select_related('author')
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)

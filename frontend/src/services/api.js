@@ -158,7 +158,7 @@ export const shiftsAPI = {
 };
 
 
-export default api;
+
 
 // ── Support / Tickets ─────────────────────────────
 export const supportAPI = {
@@ -180,3 +180,14 @@ export const supportAPI = {
   // Agents
   listAgents:      () => api.get('/support/agents/'),
 };
+
+// ── Clinical Notes ────────────────────────────────────
+export const clinicalNotesAPI = {
+  list: (params) => api.get('/records/notes/', { params }),
+  create: (data) => api.post('/records/notes/', data),
+  update: (id, data) => api.patch(`/records/notes/${id}/`, data),
+  delete: (id) => api.delete(`/records/notes/${id}/`),
+  listByRecord: (recordId) => api.get('/records/notes/', { params: { medical_record: recordId } }),
+};
+
+export default api;
