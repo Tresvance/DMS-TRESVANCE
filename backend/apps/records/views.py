@@ -11,8 +11,11 @@ from apps.users.permissions import IsAdminOrDoctor
 class MedicalRecordViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalRecordSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['patient', 'doctor']
-    search_fields = ['patient__first_name', 'patient__last_name', 'diagnosis']
+    filterset_fields = ['patient', 'doctor', 'patient__date_of_birth']
+    search_fields = [
+        'patient__first_name', 'patient__middle_name', 'patient__last_name',
+        'patient__patient_id', 'patient__phone', 'patient__email', 'diagnosis'
+    ]
     ordering = ['-created_at']
 
     def get_permissions(self):

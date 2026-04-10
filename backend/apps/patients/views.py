@@ -16,9 +16,9 @@ from apps.users.permissions import IsAdminOrReception
 
 class PatientViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['gender', 'blood_group', 'is_active']
-    search_fields = ['first_name', 'last_name', 'patient_id', 'phone', 'email']
-    ordering_fields = ['created_at', 'first_name', 'last_name']
+    filterset_fields = ['gender', 'blood_group', 'is_active', 'date_of_birth', 'patient_id', 'phone', 'email']
+    search_fields = ['first_name', 'middle_name', 'last_name', 'patient_id', 'phone', 'email']
+    ordering_fields = ['created_at', 'first_name', 'last_name', 'date_of_birth']
     ordering = ['-created_at']
 
     def get_permissions(self):

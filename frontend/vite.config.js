@@ -18,6 +18,9 @@ export default defineConfig({
         target: backendUrl,
         changeOrigin: true,
       }
+    },
+    watch: {
+      usePolling: true,
     }
   }
 })
