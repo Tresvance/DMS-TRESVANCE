@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { patientsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { PageHeader, SearchBar, Table, Spinner, EmptyState, ConfirmDialog, StatusBadge } from '../components/UI';
+import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, StatusBadge } from '../components/UI';
+import AdvancedSearch from '../components/AdvancedSearch';
 import { UserPlus, Edit2, Trash2, Eye, Users, FileImage } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -10,7 +11,7 @@ export default function Patients() {
   const { user } = useAuth();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [params, setParams] = useState({ search: '' });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
@@ -18,11 +19,11 @@ export default function Patients() {
   const loadPatients = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await patientsAPI.list({ search });
+      const { data } = await patientsAPI.list(params);
       setPatients(data.results || data);
     } catch { toast.error('Failed to load patients'); }
     finally { setLoading(false); }
-  }, [search]);
+  }, [params]);
 
   useEffect(() => { loadPatients(); }, [loadPatients]);
 
@@ -49,11 +50,15 @@ export default function Patients() {
         )}
       />
 
-      <div className="card">
-        <div className="flex items-center gap-4 mb-4">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search by name, ID, phone..." />
-        </div>
+      <div className="mb-4">
+        <AdvancedSearch 
+          onSearch={setParams} 
+          onClear={() => setParams({ search: '' })}
+          placeholder="Search by name, ID, phone..."
+        />
+      </div>
 
+      <div className="card">
         {loading ? <Spinner /> : patients.length === 0 ? (
           <EmptyState message="No patients found" icon={Users} />
         ) : (

@@ -3,6 +3,7 @@ import { recordsAPI, patientsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
 import ClinicalNotesManager from '../components/ClinicalNotesManager';
+import AdvancedSearch from '../components/AdvancedSearch';
 import { Plus, Edit2, Trash2, FileText, Loader2, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -14,7 +15,7 @@ export default function Records() {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [params, setParams] = useState({ search: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const [editId, setEditId] = useState(null);
@@ -29,8 +30,16 @@ export default function Records() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      // Map patient-specific filters to backend keys (patient__ prefix)
+      const queryParams = { ...params };
+      if (queryParams.patient_id) { queryParams.patient__patient_id = queryParams.patient_id; delete queryParams.patient_id; }
+      if (queryParams.phone) { queryParams.patient__phone = queryParams.phone; delete queryParams.phone; }
+      if (queryParams.email) { queryParams.patient__email = queryParams.email; delete queryParams.email; }
+      if (queryParams.date_of_birth) { queryParams.patient__date_of_birth = queryParams.date_of_birth; delete queryParams.date_of_birth; }
+      if (queryParams.gender) { queryParams.patient__gender = queryParams.gender; delete queryParams.gender; }
+
       const [rRes, pRes, dRes] = await Promise.all([
-        recordsAPI.list({ search }),
+        recordsAPI.list(queryParams),
         patientsAPI.list({ page_size: 200 }),
         usersAPI.list({ role: 'DOCTOR' }),
       ]);
@@ -39,7 +48,7 @@ export default function Records() {
       setDoctors(dRes.data.results || dRes.data);
     } catch { toast.error('Failed to load'); }
     finally { setLoading(false); }
-  }, [search]);
+  }, [params]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -74,8 +83,14 @@ export default function Records() {
       <PageHeader title="Medical Records" subtitle={`${records.length} records`}
         action={canEdit && <button onClick={() => { setForm(INITIAL_FORM); setEditId(null); setModalOpen(true); }} className="btn-primary flex items-center gap-2"><Plus className="w-4 h-4" /> Add Record</button>}
       />
+      <div className="mb-4">
+        <AdvancedSearch 
+          onSearch={setParams} 
+          onClear={() => setParams({ search: '' })}
+          placeholder="Search by patient name, diagnosis, ID..."
+        />
+      </div>
       <div className="card">
-        <div className="mb-4"><SearchBar value={search} onChange={setSearch} placeholder="Search by patient, diagnosis..." /></div>
         {loading ? <Spinner /> : records.length === 0 ? <EmptyState message="No medical records found" icon={FileText} /> : (
           <Table headers={['Patient', 'Doctor', 'Diagnosis', 'Treatment', 'Next Visit', 'Date', ...(canEdit ? ['Actions'] : [])]}>
             {records.map(r => (
