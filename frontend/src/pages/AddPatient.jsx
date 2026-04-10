@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { patientsAPI } from '../services/api';
 import { FormField, Spinner } from '../components/UI';
-import { ArrowLeft, Loader2, Plus, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Info, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
@@ -14,6 +14,9 @@ const INITIAL_FORM = {
   emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relationship: '',
   insurance_provider: '', insurance_policy_number: '', insurance_coverage_details: '',
   referring_source: '',
+  is_vip: false,
+  is_high_risk: false,
+  risk_details: '',
 };
 
 export default function AddPatient() {
@@ -52,6 +55,9 @@ export default function AddPatient() {
         insurance_policy_number: data.insurance_policy_number || '',
         insurance_coverage_details: data.insurance_coverage_details || '',
         referring_source: data.referring_source || '',
+        is_vip: data.is_vip || false,
+        is_high_risk: data.is_high_risk || false,
+        risk_details: data.risk_details || '',
       });
     }).catch(() => toast.error('Failed to load patient'))
       .finally(() => setFetching(false));
@@ -210,24 +216,63 @@ export default function AddPatient() {
           </div>
         </div>
 
-        {/* Insurance Info */}
-        <div className="card">
+        {/* Administrative & Clinical Alerts */}
+        <div className="card border-2 border-dashed border-gray-200 bg-gray-50/50">
           <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-base font-semibold text-gray-900">Insurance Information</h2>
-            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">OPTIONAL</span>
+            <Info className="w-5 h-5 text-blue-500" />
+            <h2 className="text-base font-semibold text-gray-900">Administrative & Clinical Alerts</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Insurance Provider">
-              <input name="insurance_provider" value={form.insurance_provider} onChange={handleChange} className="input-field" placeholder="e.g. Star Health" />
-            </FormField>
-            <FormField label="Policy Number">
-              <input name="insurance_policy_number" value={form.insurance_policy_number} onChange={handleChange} className="input-field" placeholder="Policy ID" />
-            </FormField>
-            <div className="sm:col-span-2">
-              <FormField label="Coverage Details">
-                <textarea name="insurance_coverage_details" value={form.insurance_coverage_details} onChange={handleChange} className="input-field" rows={2} placeholder="Briefly describe coverage..." />
-              </FormField>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+              <div>
+                <div className="font-bold text-gray-900">VIP Status</div>
+                <div className="text-xs text-gray-500">Flag patient for priority scheduling</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={form.is_vip} 
+                  onChange={(e) => setForm(f => ({ ...f, is_vip: e.target.checked }))}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
             </div>
+
+            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+              <div>
+                <div className="font-bold text-gray-900">High-Risk Patient</div>
+                <div className="text-xs text-gray-500">Critical medical complications</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={form.is_high_risk} 
+                  onChange={(e) => setForm(f => ({ ...f, is_high_risk: e.target.checked }))}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+              </label>
+            </div>
+
+            {form.is_high_risk && (
+              <div className="sm:col-span-2 animate-in fadeIn duration-300">
+                <FormField label="Risk Details & Complications" required={form.is_high_risk}>
+                  <textarea 
+                    name="risk_details" 
+                    value={form.risk_details} 
+                    onChange={handleChange} 
+                    className="input-field border-red-100 focus:border-red-500 focus:ring-red-500 bg-red-50/10" 
+                    rows={3} 
+                    placeholder="Enter details about cardiac issues, allergies, chronic conditions, etc." 
+                  />
+                  <div className="mt-1 flex items-start gap-1.5 text-xs text-red-600 font-medium">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5" />
+                    <span>These details will be highlighted to all staff during scheduling and visits.</span>
+                  </div>
+                </FormField>
+              </div>
+            )}
           </div>
         </div>
 

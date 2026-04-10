@@ -85,6 +85,9 @@ class Patient(models.Model):
         default=PatientStatus.ACTIVE
     )
     is_active = models.BooleanField(default=True)
+    is_vip = models.BooleanField(default=False, help_text="Priority patient for scheduling")
+    is_high_risk = models.BooleanField(default=False, help_text="Patient with critical medical complications")
+    risk_details = models.TextField(blank=True, help_text="Specific details about medical risks")
     merged_into = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='merged_duplicates', help_text='The primary record this patient was merged into'
