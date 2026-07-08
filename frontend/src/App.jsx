@@ -44,8 +44,8 @@ const DashboardRedirect = () => {
   const map = {
     SUPER_ADMIN:   '/super/dashboard',
     SUPPORT_AGENT: '/support/dashboard',
-    CLINIC_ADMIN:  '/clinic/dashboard',
-    DOCTOR:        '/doctor/dashboard',
+    ADMIN:  '/clinic/dashboard',
+    DENTIST:        '/doctor/dashboard',
     RECEPTION:     '/reception/dashboard',
   };
   return <Navigate to={map[user?.role] || '/login'} replace />;
@@ -68,15 +68,15 @@ function AppRoutes() {
         <Route path="super/payments"      element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
 
         {/* ── Clinic Admin ────────────────────────────── */}
-        <Route path="clinic/dashboard" element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><ClinicAdminDashboard /></ProtectedRoute>} />
-        <Route path="clinic/staff"     element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><Users /></ProtectedRoute>} />
-        <Route path="clinic/shifts"    element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><Shifts /></ProtectedRoute>} />
-        <Route path="clinic/reports"   element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><PatientReports /></ProtectedRoute>} />
-        <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
+        <Route path="clinic/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><ClinicAdminDashboard /></ProtectedRoute>} />
+        <Route path="clinic/staff"     element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /></ProtectedRoute>} />
+        <Route path="clinic/shifts"    element={<ProtectedRoute allowedRoles={['ADMIN']}><Shifts /></ProtectedRoute>} />
+        <Route path="clinic/reports"   element={<ProtectedRoute allowedRoles={['ADMIN']}><PatientReports /></ProtectedRoute>} />
+        <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['ADMIN']}><PaymentHistory /></ProtectedRoute>} />
 
 
         {/* ── Doctor ──────────────────────────────────── */}
-        <Route path="doctor/dashboard" element={<ProtectedRoute allowedRoles={['DOCTOR']}><DoctorDashboard /></ProtectedRoute>} />
+        <Route path="doctor/dashboard" element={<ProtectedRoute allowedRoles={['DENTIST']}><DoctorDashboard /></ProtectedRoute>} />
 
         {/* ── Reception ───────────────────────────────── */}
         <Route path="reception/dashboard" element={<ProtectedRoute allowedRoles={['RECEPTION']}><ReceptionDashboard /></ProtectedRoute>} />
@@ -86,13 +86,13 @@ function AppRoutes() {
 
         {/* ── Support / Tickets (all roles) ───────────── */}
         <Route path="support/tickets"        element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
-        <Route path="support/tickets/new"    element={<ProtectedRoute allowedRoles={['CLINIC_ADMIN','DOCTOR','RECEPTION']}><NewTicket /></ProtectedRoute>} />
+        <Route path="support/tickets/new"    element={<ProtectedRoute allowedRoles={['ADMIN','DENTIST','RECEPTION']}><NewTicket /></ProtectedRoute>} />
         <Route path="support/tickets/:id"    element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
 
         {/* ── Shared Clinical ─────────────────────────── */}
         <Route path="patients"              element={<ProtectedRoute><Patients /></ProtectedRoute>} />
-        <Route path="patients/new"          element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
-        <Route path="patients/:id/edit"     element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','CLINIC_ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
+        <Route path="patients/new"          element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
+        <Route path="patients/:id/edit"     element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
         <Route path="patients/:id/documents" element={<ProtectedRoute><PatientDocuments /></ProtectedRoute>} />
         <Route path="appointments"          element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
         <Route path="records"            element={<ProtectedRoute><Records /></ProtectedRoute>} />

@@ -59,7 +59,7 @@ export default function ReceptionDashboard() {
         {todayAppts.length === 0 ? (
           <p className="text-center py-8 text-gray-400 text-sm">No appointments today</p>
         ) : (
-          <Table headers={['Patient', 'Doctor', 'Time', 'Reason', 'Status']}>
+          <Table headers={['Patient', 'DENTIST', 'Time', 'Reason', 'Status']}>
             {todayAppts.map(appt => (
               <tr key={appt.id} className="hover:bg-gray-50">
                 <td className="table-cell">

@@ -24,7 +24,7 @@ const navConfig = {
     { to: '/support/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/support/tickets',      icon: Ticket,          label: 'My Tickets' },
   ],
-  CLINIC_ADMIN: [
+  ADMIN: [
     { to: '/clinic/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/clinic/staff',         icon: Users,           label: 'Staff' },
     { to: '/clinic/shifts',        icon: Clock,           label: 'Shifts' },
@@ -39,7 +39,7 @@ const navConfig = {
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
   ],
-  DOCTOR: [
+  DENTIST: [
     { to: '/doctor/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients',             icon: UserPlus,        label: 'Patients' },
     { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
@@ -61,8 +61,8 @@ const navConfig = {
 const roleLabels = {
   SUPER_ADMIN:   { label: 'Super Admin',    color: 'bg-red-100 text-red-700' },
   SUPPORT_AGENT: { label: 'Support Agent',  color: 'bg-yellow-100 text-yellow-700' },
-  CLINIC_ADMIN:  { label: 'Clinic Admin',   color: 'bg-purple-100 text-purple-700' },
-  DOCTOR:        { label: 'Doctor',         color: 'bg-green-100 text-green-700' },
+  ADMIN:  { label: 'Clinic Admin',   color: 'bg-purple-100 text-purple-700' },
+  DENTIST:        { label: 'DENTIST',         color: 'bg-green-100 text-green-700' },
   RECEPTION:     { label: 'Receptionist',   color: 'bg-blue-100 text-blue-700' },
 };
 

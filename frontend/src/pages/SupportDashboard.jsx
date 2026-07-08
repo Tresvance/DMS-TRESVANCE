@@ -48,7 +48,7 @@ export default function SupportDashboard() {
               className="p-3 rounded-xl text-sm font-medium text-center bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
               View All Tickets
             </Link>
-            {['CLINIC_ADMIN','DOCTOR','RECEPTION'].includes(user?.role) && (
+            {['ADMIN','DENTIST','RECEPTION'].includes(user?.role) && (
               <Link to="/support/tickets/new"
                 className="p-3 rounded-xl text-sm font-medium text-center bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
                 Raise New Ticket

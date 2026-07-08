@@ -22,11 +22,11 @@ class MedicineViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
+        if user.role in ['SUPER_ADMIN', 'ADMIN']:
             return Medicine.objects.all().select_related('clinic')
         return Medicine.objects.filter(clinic=user.clinic).select_related('clinic')
 
     def perform_create(self, serializer):
         user = self.request.user
-        clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
+        clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'ADMIN'] else serializer.validated_data.get('clinic')
         serializer.save(clinic=clinic)

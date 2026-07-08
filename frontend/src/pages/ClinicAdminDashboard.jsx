@@ -181,7 +181,7 @@ export default function ClinicAdminDashboard() {
         {appts.length === 0 ? (
           <p className="text-center py-8 text-gray-400 text-sm">No appointments today</p>
         ) : (
-          <Table headers={['Patient', 'Doctor', 'Time', 'Reason', 'Status']}>
+          <Table headers={['Patient', 'DENTIST', 'Time', 'Reason', 'Status']}>
             {appts.map(a => (
               <tr key={a.id} className="hover:bg-gray-50">
                 <td className="table-cell font-medium">{a.patient_name}</td>

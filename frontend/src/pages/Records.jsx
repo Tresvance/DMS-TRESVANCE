@@ -7,7 +7,7 @@ import AdvancedSearch from '../components/AdvancedSearch';
 import { Plus, Edit2, Trash2, FileText, Loader2, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const INITIAL_FORM = { patient: '', doctor: '', diagnosis: '', treatment_plan: '', prescription: '', procedures_done: '', next_visit_date: '' };
+const INITIAL_FORM = { patient: '', DENTIST: '', diagnosis: '', treatment_plan: '', prescription: '', procedures_done: '', next_visit_date: '' };
 
 export default function Records() {
   const { user } = useAuth();
@@ -23,7 +23,7 @@ export default function Records() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [notesTarget, setNotesTarget] = useState(null);
-  const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'DOCTOR'].includes(user?.role);
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'DENTIST'].includes(user?.role);
 
   const fc = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
@@ -41,7 +41,7 @@ export default function Records() {
       const [rRes, pRes, dRes] = await Promise.all([
         recordsAPI.list(queryParams),
         patientsAPI.list({ page_size: 200 }),
-        usersAPI.list({ role: 'DOCTOR' }),
+        usersAPI.list({ role: 'DENTIST' }),
       ]);
       setRecords(rRes.data.results || rRes.data);
       setPatients(pRes.data.results || pRes.data);
@@ -53,7 +53,7 @@ export default function Records() {
   useEffect(() => { load(); }, [load]);
 
   const openEdit = (r) => {
-    setForm({ patient: r.patient, doctor: r.doctor, diagnosis: r.diagnosis, treatment_plan: r.treatment_plan, prescription: r.prescription || '', procedures_done: r.procedures_done || '', next_visit_date: r.next_visit_date || '' });
+    setForm({ patient: r.patient, DENTIST: r.doctor, diagnosis: r.diagnosis, treatment_plan: r.treatment_plan, prescription: r.prescription || '', procedures_done: r.procedures_done || '', next_visit_date: r.next_visit_date || '' });
     setEditId(r.id); setModalOpen(true);
   };
 
@@ -63,7 +63,7 @@ export default function Records() {
     setSaving(true);
     try {
       const payload = { ...form };
-      if (user?.role === 'DOCTOR') payload.doctor = user.id;
+      if (user?.role === 'DENTIST') payload.doctor = user.id;
       if (editId) await recordsAPI.update(editId, payload); else await recordsAPI.create(payload);
       toast.success(editId ? 'Record updated' : 'Record created');
       setModalOpen(false); load();
@@ -92,7 +92,7 @@ export default function Records() {
       </div>
       <div className="card">
         {loading ? <Spinner /> : records.length === 0 ? <EmptyState message="No medical records found" icon={FileText} /> : (
-          <Table headers={['Patient', 'Doctor', 'Diagnosis', 'Treatment', 'Next Visit', 'Date', ...(canEdit ? ['Actions'] : [])]}>
+          <Table headers={['Patient', 'DENTIST', 'Diagnosis', 'Treatment', 'Next Visit', 'Date', ...(canEdit ? ['Actions'] : [])]}>
             {records.map(r => (
               <tr key={r.id} className="hover:bg-gray-50">
                 <td className="table-cell font-medium">{r.patient_name}</td>
@@ -125,9 +125,9 @@ export default function Records() {
                 {patients.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
               </select>
             </FormField>
-            {user?.role !== 'DOCTOR' && (
-              <FormField label="Doctor" required>
-                <select value={form.doctor} onChange={fc('doctor')} className="input-field">
+            {user?.role !== 'DENTIST' && (
+              <FormField label="DENTIST" required>
+                <select value={form.doctor} onChange={fc('DENTIST')} className="input-field">
                   <option value="">Select doctor</option>
                   {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.full_name}</option>)}
                 </select>

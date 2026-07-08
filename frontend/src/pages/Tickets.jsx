@@ -30,7 +30,7 @@ export default function Tickets() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]   = useState(false);
 
-  const canCreate = ['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION'].includes(user?.role);
+  const canCreate = ['ADMIN', 'DENTIST', 'RECEPTION'].includes(user?.role);
 
   const load = useCallback(async () => {
     setLoading(true);

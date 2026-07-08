@@ -146,7 +146,7 @@ export default function Billing() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [viewTarget, setViewTarget] = useState(null);
-  const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'RECEPTION'].includes(user?.role);
   const fc = (f) => (e) => setForm(v => ({ ...v, [f]: e.target.value }));
 
   const load = useCallback(async () => {

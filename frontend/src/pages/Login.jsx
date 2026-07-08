@@ -7,8 +7,8 @@ import { Stethoscope, Eye, EyeOff, Loader2, Building2 } from 'lucide-react';
 
 const ROLE_REDIRECT = {
   SUPER_ADMIN:  '/super/dashboard',
-  CLINIC_ADMIN: '/clinic/dashboard',
-  DOCTOR:       '/doctor/dashboard',
+  ADMIN: '/clinic/dashboard',
+  DENTIST:       '/doctor/dashboard',
   RECEPTION:    '/reception/dashboard',
 };
 

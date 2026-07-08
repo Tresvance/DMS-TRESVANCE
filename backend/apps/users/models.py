@@ -104,3 +104,39 @@ class UserPasswordHistory(models.Model):
     class Meta:
         db_table = 'user_password_history'
         ordering = ['-created_at']
+
+class StaffProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
+    department = models.CharField(max_length=100, blank=True)
+    specialization = models.CharField(max_length=100, blank=True)
+    performance_metrics = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        db_table = 'staff_profiles'
+
+class StaffCredential(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='credentials')
+    name = models.CharField(max_length=200)
+    license_number = models.CharField(max_length=100)
+    expiration_date = models.DateField()
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'staff_credentials'
+
+class AuditLog(models.Model):
+    class ActionType(models.TextChoices):
+        LOGIN_SUCCESS = 'LOGIN_SUCCESS', 'Login Success'
+        LOGIN_FAILED = 'LOGIN_FAILED', 'Login Failed'
+        PERMISSION_CHANGE = 'PERMISSION_CHANGE', 'Permission Change'
+        ADMIN_ACTION = 'ADMIN_ACTION', 'Admin Action'
+        
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    action = models.CharField(max_length=50, choices=ActionType.choices)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'audit_logs'
+        ordering = ['-timestamp']

@@ -18,7 +18,7 @@ export default function Medicines() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'DOCTOR'].includes(user?.role);
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'DENTIST'].includes(user?.role);
   const fc = (f) => (e) => setForm(v => ({ ...v, [f]: e.target.value }));
 
   const load = useCallback(async () => {

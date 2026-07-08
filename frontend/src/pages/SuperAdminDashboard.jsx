@@ -53,7 +53,7 @@ export default function SuperAdminDashboard() {
             {[
               { role: 'Super Admin (You)',  desc: 'Creates clinics & clinic admins',         color: 'bg-red-50 text-red-700 border-red-200' },
               { role: 'Clinic Admin',       desc: 'Manages staff within their clinic',        color: 'bg-purple-50 text-purple-700 border-purple-200' },
-              { role: 'Doctor',             desc: 'Patients, appointments, records',          color: 'bg-green-50 text-green-700 border-green-200' },
+              { role: 'DENTIST',             desc: 'Patients, appointments, records',          color: 'bg-green-50 text-green-700 border-green-200' },
               { role: 'Receptionist',       desc: 'Patients, appointments, billing',          color: 'bg-blue-50 text-blue-700 border-blue-200' },
             ].map(({ role, desc, color }) => (
               <div key={role} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${color}`}>

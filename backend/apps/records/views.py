@@ -25,9 +25,9 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
+        if user.role in ['SUPER_ADMIN', 'ADMIN']:
             qs = MedicalRecord.objects.all()
-        elif user.role == 'DOCTOR':
+        elif user.role == 'DENTIST':
             qs = MedicalRecord.objects.filter(clinic=user.clinic, doctor=user)
         else:
             qs = MedicalRecord.objects.filter(clinic=user.clinic)
@@ -43,7 +43,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
             clinic = user.clinic
             
         # Determine the doctor
-        if user.role == 'DOCTOR':
+        if user.role == 'DENTIST':
             doctor = user
         else:
             doctor = serializer.validated_data.get('doctor')

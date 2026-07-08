@@ -6,7 +6,7 @@ class MedicalRecord(models.Model):
     patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='medical_records')
     doctor = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, related_name='medical_records',
-        limit_choices_to={'role': 'DOCTOR'}
+        limit_choices_to={'role': 'DENTIST'}
     )
     appointment = models.OneToOneField(
         'appointments.Appointment', on_delete=models.SET_NULL,

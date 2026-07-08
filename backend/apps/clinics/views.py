@@ -104,7 +104,7 @@ def create_payment_order(request):
     user = request.user
     if user.role == 'SUPER_ADMIN':
         pass  # Super admin can pay for any clinic
-    elif user.role == 'CLINIC_ADMIN' and user.clinic_id == clinic_id:
+    elif user.role == 'ADMIN' and user.clinic_id == clinic_id:
         pass  # Clinic admin can pay for their own clinic
     else:
         return Response(

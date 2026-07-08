@@ -61,7 +61,7 @@ export default function Shifts() {
       
       // Filter staff: doctors, nurses, receptionists
       const staffList = usersData.filter(u => 
-        ['DOCTOR', 'NURSE', 'RECEPTION'].includes(u.role)
+        ['DENTIST', 'HYGIENIST', 'RECEPTION'].includes(u.role)
       );
       setStaff(staffList);
     } catch (err) { 
@@ -154,8 +154,8 @@ export default function Shifts() {
                 </td>
                 <td className="table-cell">
                   <span className={`badge ${
-                    s.user_details?.role === 'DOCTOR' ? 'bg-green-100 text-green-700' :
-                    s.user_details?.role === 'NURSE' ? 'bg-teal-100 text-teal-700' :
+                    s.user_details?.role === 'DENTIST' ? 'bg-green-100 text-green-700' :
+                    s.user_details?.role === 'HYGIENIST' ? 'bg-teal-100 text-teal-700' :
                     'bg-blue-100 text-blue-700'
                   }`}>
                     {s.user_details?.role?.toLowerCase()}

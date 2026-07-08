@@ -30,7 +30,7 @@ export default function Patients() {
   const [consentPatient, setConsentPatient] = useState(null);
   const [actionMenuId, setActionMenuId] = useState(null);
   const [consentMenuId, setConsentMenuId] = useState(null);
-  const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'RECEPTION'].includes(user?.role);
 
   const loadPatients = useCallback(async () => {
     setLoading(true);

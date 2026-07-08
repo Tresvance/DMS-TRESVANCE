@@ -12,7 +12,7 @@ class Appointment(models.Model):
     patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='appointments')
     doctor = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, related_name='appointments',
-        limit_choices_to={'role': 'DOCTOR'}
+        limit_choices_to={'role': 'DENTIST'}
     )
     appointment_date = models.DateField()
     appointment_time = models.TimeField()

@@ -124,7 +124,7 @@ class FHIRMapper:
                 record = MedicalRecord.objects.create(
                     clinic=clinic,
                     patient=patient,
-                    doctor=clinic.users.filter(role='DOCTOR').first(), # Assign to first doctor found
+                    doctor=clinic.users.filter(role='DENTIST').first(), # Assign to first doctor found
                     diagnosis=res.get("code", {}).get("text", "Unknown Diagnosis"),
                     treatment_plan=treatment,
                     created_at=res.get("recordedDate", timezone.now().isoformat())

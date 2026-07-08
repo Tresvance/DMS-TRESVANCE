@@ -62,7 +62,7 @@ class PatientViewSet(viewsets.ModelViewSet):
             )
         )
 
-        if user.role in ['SUPER_ADMIN', 'CLINIC_ADMIN']:
+        if user.role == 'SUPER_ADMIN':
             return qs
         return qs.filter(clinic=user.clinic)
 
@@ -73,13 +73,13 @@ class PatientViewSet(viewsets.ModelViewSet):
 
     # def perform_create(self, serializer):
     #     user = self.request.user
-    #     clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'CLINIC_ADMIN'] else serializer.validated_data.get('clinic')
+    #     clinic = user.clinic if user.role not in ['SUPER_ADMIN', 'ADMIN'] else serializer.validated_data.get('clinic')
     #     serializer.save(clinic=clinic)
 
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role in ['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION']:
+        if user.role in ['ADMIN', 'DENTIST', 'RECEPTION', 'HYGIENIST']:
             serializer.save(clinic=user.clinic)
         else:
             serializer.save()

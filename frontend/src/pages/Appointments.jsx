@@ -9,7 +9,7 @@ import { Plus, Edit2, Trash2, Calendar, Loader2, Star, AlertCircle } from 'lucid
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
-  patient: '', doctor: '', appointment_date: '', appointment_time: '09:00',
+  patient: '', DENTIST: '', appointment_date: '', appointment_time: '09:00',
   reason: '', status: 'Scheduled', notes: '',
 };
 
@@ -81,7 +81,7 @@ export default function Appointments() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const canEdit = ['SUPER_ADMIN', 'CLINIC_ADMIN', 'RECEPTION'].includes(user?.role);
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'RECEPTION'].includes(user?.role);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,7 +89,7 @@ export default function Appointments() {
       const [apptRes, patRes, docRes] = await Promise.all([
         appointmentsAPI.list({ search }),
         patientsAPI.list({ page_size: 200 }),
-        usersAPI.list({ role: 'DOCTOR' }),
+        usersAPI.list({ role: 'DENTIST' }),
       ]);
       setAppointments(apptRes.data.results || apptRes.data);
       setPatients(patRes.data.results || patRes.data);
@@ -103,7 +103,7 @@ export default function Appointments() {
   const openAdd = () => { setForm(INITIAL_FORM); setEditId(null); setModalOpen(true); };
   const openEdit = (a) => {
     setForm({
-      patient: a.patient, doctor: a.doctor, appointment_date: a.appointment_date,
+      patient: a.patient, DENTIST: a.doctor, appointment_date: a.appointment_date,
       appointment_time: a.appointment_time?.slice(0, 5) || '09:00', 
       reason: a.reason,
       status: a.status, notes: a.notes || '',
@@ -155,7 +155,7 @@ export default function Appointments() {
         {loading ? <Spinner /> : appointments.length === 0 ? (
           <EmptyState message="No appointments found" icon={Calendar} />
         ) : (
-          <Table headers={['Patient', 'Doctor', 'Date', 'Time', 'Reason', 'Status', ...(canEdit ? ['Actions'] : [])]}>
+          <Table headers={['Patient', 'DENTIST', 'Date', 'Time', 'Reason', 'Status', ...(canEdit ? ['Actions'] : [])]}>
             {appointments.map(a => (
               <tr key={a.id} className="hover:bg-gray-50">
                 <td className="table-cell">
@@ -208,8 +208,8 @@ export default function Appointments() {
                 {patients.map(p => <option key={p.id} value={p.id}>{p.full_name} ({p.patient_id})</option>)}
               </select>
             </FormField>
-            <FormField label="Doctor" required>
-              <select name="doctor" value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} className="input-field">
+            <FormField label="DENTIST" required>
+              <select name="DENTIST" value={form.doctor} onChange={e => setForm(f => ({ ...f, DENTIST: e.target.value }))} className="input-field">
                 <option value="">Select doctor</option>
                 {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.full_name}</option>)}
               </select>

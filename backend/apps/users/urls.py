@@ -1,10 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import CustomTokenObtainPairView, LogoutView, UserViewSet, DashboardView
+from .views import (
+    CustomTokenObtainPairView, LogoutView, UserViewSet, DashboardView,
+    AuditLogViewSet, StaffCredentialViewSet
+)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
+router.register(r'staff-credentials', StaffCredentialViewSet, basename='staff-credential')
 
 urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

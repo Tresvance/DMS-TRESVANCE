@@ -26,7 +26,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             qs = Appointment.objects.all()
         elif user.role == 'SUPPORT_AGENT':
             qs = Appointment.objects.none()
-        elif user.role == 'DOCTOR':
+        elif user.role == 'DENTIST':
             qs = Appointment.objects.filter(clinic=user.clinic, doctor=user)
         else:
             qs = Appointment.objects.filter(clinic=user.clinic)

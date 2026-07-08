@@ -7,10 +7,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 
-from .models import User
+from .models import User, AuditLog, StaffCredential
 from .serializers import (
     CustomTokenObtainPairSerializer, UserSerializer,
-    UserProfileSerializer, ChangePasswordSerializer
+    UserProfileSerializer, ChangePasswordSerializer,
+    StaffCredentialSerializer, AuditLogSerializer
 )
 from .permissions import IsSuperAdmin, IsSuperOrClinicAdmin
 
@@ -165,3 +166,32 @@ class DashboardView(generics.GenericAPIView):
             }
 
         return Response(data)
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = AuditLogSerializer
+    permission_classes = [IsSuperOrClinicAdmin]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['action', 'user']
+    search_fields = ['user__email', 'ip_address', 'description']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPER_ADMIN':
+            return AuditLog.objects.all().select_related('user')
+        if user.clinic:
+            return AuditLog.objects.filter(user__clinic=user.clinic).select_related('user')
+        return AuditLog.objects.none()
+
+class StaffCredentialViewSet(viewsets.ModelViewSet):
+    serializer_class = StaffCredentialSerializer
+    permission_classes = [IsSuperOrClinicAdmin]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['user', 'is_verified']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPER_ADMIN':
+            return StaffCredential.objects.all()
+        if user.clinic:
+            return StaffCredential.objects.filter(user__clinic=user.clinic)
+        return StaffCredential.objects.none()

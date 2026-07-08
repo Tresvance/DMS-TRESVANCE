@@ -5,7 +5,8 @@ from datetime import timedelta
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
-from .models import User, UserPasswordHistory
+from .models import User, UserPasswordHistory, StaffProfile, StaffCredential, AuditLog
+from .utils import get_client_ip
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -34,10 +35,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         email = attrs.get(User.USERNAME_FIELD)
         user_obj = User.objects.filter(email=email).first()
 
+        request = self.context.get('request')
+        ip_address = get_client_ip(request) if request else None
+
         if user_obj:
             # Check lockout
             if user_obj.failed_login_attempts >= 5 and user_obj.last_failed_login:
                 if timezone.now() < user_obj.last_failed_login + timedelta(minutes=15):
+                    AuditLog.objects.create(
+                        user=user_obj, action=AuditLog.ActionType.LOGIN_FAILED,
+                        ip_address=ip_address, description='Account temporarily locked.'
+                    )
                     raise AuthenticationFailed('Account temporarily locked due to too many failed login attempts. Try again in 15 minutes.')
                 else:
                     # Reset after 15 minutes
@@ -51,6 +59,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 user_obj.failed_login_attempts += 1
                 user_obj.last_failed_login = timezone.now()
                 user_obj.save(update_fields=['failed_login_attempts', 'last_failed_login'])
+                AuditLog.objects.create(
+                    user=user_obj, action=AuditLog.ActionType.LOGIN_FAILED,
+                    ip_address=ip_address, description='Invalid credentials.'
+                )
             raise e
 
         user = self.user
@@ -60,6 +72,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             user.failed_login_attempts = 0
             user.save(update_fields=['failed_login_attempts'])
         
+        # Log successful login
+        AuditLog.objects.create(
+            user=user, action=AuditLog.ActionType.LOGIN_SUCCESS,
+            ip_address=ip_address, description='Successful login.'
+        )
+
         # Check if login is from a clinic subdomain
         request = self.context.get('request')
         if request and hasattr(request, 'clinic') and request.clinic:
@@ -103,17 +121,32 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class StaffProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaffProfile
+        fields = ['department', 'specialization', 'performance_metrics']
+
+
+class StaffCredentialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaffCredential
+        fields = ['id', 'name', 'license_number', 'expiration_date', 'is_verified']
+
+
 class UserSerializer(serializers.ModelSerializer):
     full_name   = serializers.SerializerMethodField()
     clinic_name = serializers.SerializerMethodField()
     password    = serializers.CharField(write_only=True, required=False)
+    staff_profile = StaffProfileSerializer(read_only=True)
+    credentials = StaffCredentialSerializer(many=True, read_only=True)
 
     class Meta:
         model  = User
         fields = [
             'id', 'first_name', 'last_name', 'full_name', 'email',
             'phone', 'role', 'clinic', 'clinic_name',
-            'is_active', 'date_joined', 'password'
+            'is_active', 'date_joined', 'password',
+            'staff_profile', 'credentials'
         ]
         read_only_fields = ['id', 'date_joined']
 
@@ -168,10 +201,12 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     full_name   = serializers.SerializerMethodField()
     clinic_name = serializers.SerializerMethodField()
+    staff_profile = StaffProfileSerializer(read_only=True)
+    credentials = StaffCredentialSerializer(many=True, read_only=True)
 
     class Meta:
         model        = User
-        fields       = ['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'role', 'clinic', 'clinic_name']
+        fields       = ['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'role', 'clinic', 'clinic_name', 'staff_profile', 'credentials']
         read_only_fields = ['id', 'email', 'role', 'clinic']
 
     def get_full_name(self, obj):
@@ -220,6 +255,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.password_last_changed = timezone.now()
         user.force_password_change = False
         user.save()
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = AuditLog
+        fields = ['id', 'user', 'user_email', 'action', 'ip_address', 'description', 'timestamp']
         
 # Re-apply clinic check separately (keeps logic clean)
 # Clinic Admin can only create for their own clinic

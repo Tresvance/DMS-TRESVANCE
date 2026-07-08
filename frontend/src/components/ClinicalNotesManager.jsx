@@ -101,7 +101,7 @@ export default function ClinicalNotesManager({ recordId, clinicId }) {
                     </span>
                   </div>
                 </div>
-                {(user.id === note.author || user.role === 'CLINIC_ADMIN' || user.role === 'SUPER_ADMIN') && (
+                {(user.id === note.author || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                   <div className="flex gap-1">
                     <button 
                       onClick={() => { setEditingId(note.id); setEditContent(note.content); }}

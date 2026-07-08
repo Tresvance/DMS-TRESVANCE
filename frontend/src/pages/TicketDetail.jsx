@@ -42,7 +42,7 @@ export default function TicketDetail() {
 
   const isSuperAdmin    = user?.role === 'SUPER_ADMIN';
   const isSupportAgent  = user?.role === 'SUPPORT_AGENT';
-  const isClinicUser    = ['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION'].includes(user?.role);
+  const isClinicUser    = ['ADMIN', 'DENTIST', 'RECEPTION'].includes(user?.role);
 
   const load = async () => {
     try {

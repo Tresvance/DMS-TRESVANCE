@@ -10,17 +10,19 @@ export default function Users() {
   const { user: me } = useAuth();
   const location = useLocation();
   const isSuperAdmin  = me?.role === 'SUPER_ADMIN';
-  const isClinicAdmin = me?.role === 'CLINIC_ADMIN';
+  const isClinicAdmin = me?.role === 'ADMIN';
   const isAgentsPage  = location.pathname.includes('agents');
 
   // Determine roles this user can create based on page context
   const allowedRoles = isSuperAdmin
     ? isAgentsPage
       ? [{ value: 'SUPPORT_AGENT', label: 'Support Agent' }]
-      : [{ value: 'CLINIC_ADMIN',  label: 'Clinic Admin' }]
+      : [{ value: 'ADMIN',  label: 'Clinic Admin' }]
     : [
-        { value: 'DOCTOR',    label: 'Doctor' },
-        { value: 'RECEPTION', label: 'Receptionist' },
+        { value: 'DENTIST',    label: 'Dentist' },
+        { value: 'HYGIENIST',  label: 'Hygienist/Assistant' },
+        { value: 'RECEPTION',  label: 'Receptionist' },
+        { value: 'ACCOUNT_MANAGER', label: 'Account Manager' },
       ];
 
   const pageTitle = isSuperAdmin
@@ -54,7 +56,7 @@ export default function Users() {
     setLoading(true);
     try {
       const roleFilter = isSuperAdmin
-        ? isAgentsPage ? { role: 'SUPPORT_AGENT', search } : { role: 'CLINIC_ADMIN', search }
+        ? isAgentsPage ? { role: 'SUPPORT_AGENT', search } : { role: 'ADMIN', search }
         : { search };
       const [uRes, cRes] = await Promise.all([
         usersAPI.list(roleFilter),
@@ -111,8 +113,8 @@ export default function Users() {
   const badgeColor = (role) => ({
     SUPER_ADMIN:   'bg-red-100 text-red-700',
     SUPPORT_AGENT: 'bg-yellow-100 text-yellow-700',
-    CLINIC_ADMIN:  'bg-purple-100 text-purple-700',
-    DOCTOR:        'bg-green-100 text-green-700',
+    ADMIN:  'bg-purple-100 text-purple-700',
+    DENTIST:        'bg-green-100 text-green-700',
     RECEPTION:     'bg-blue-100 text-blue-700',
   }[role] || 'bg-gray-100 text-gray-700');
 

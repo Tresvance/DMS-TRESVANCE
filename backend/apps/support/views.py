@@ -33,7 +33,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             return qs.all()
         elif user.role == 'SUPPORT_AGENT':
             return qs.filter(assigned_to=user)
-        elif user.role == 'CLINIC_ADMIN':
+        elif user.role == 'ADMIN':
             return qs.filter(clinic=user.clinic)
         else:
             # Doctors and Reception can only see tickets they raised
@@ -88,7 +88,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         allowed_transitions = {
             'SUPER_ADMIN':    list(Ticket.Status.values),
             'SUPPORT_AGENT':  ['In Progress', 'Waiting', 'Resolved'],
-            'CLINIC_ADMIN':   ['Closed'],
+            'ADMIN':   ['Closed'],
         }
         allowed = allowed_transitions.get(user.role, [])
         if new_status not in allowed:

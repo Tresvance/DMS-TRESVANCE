@@ -97,7 +97,7 @@ class TicketDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         qs = obj.comments.all()
         # Hide internal notes from clinic users
-        if request and request.user.role in ['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION']:
+        if request and request.user.role in ['ADMIN', 'DENTIST', 'RECEPTION']:
             qs = qs.filter(is_internal=False)
         return TicketCommentSerializer(qs, many=True, context=self.context).data
 
