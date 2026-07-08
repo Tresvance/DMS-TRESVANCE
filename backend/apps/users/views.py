@@ -107,9 +107,9 @@ class DashboardView(generics.GenericAPIView):
         if user.role == 'SUPER_ADMIN':
             data = {
                 'total_clinics':       Clinic.objects.count(),
-                'total_clinic_admins': User.objects.filter(role='CLINIC_ADMIN').count(),
-                'total_doctors':       User.objects.filter(role='DOCTOR').count(),
-                'total_staff':         User.objects.filter(role__in=['CLINIC_ADMIN', 'DOCTOR', 'RECEPTION']).count(),
+                'total_clinic_admins': User.objects.filter(role='ADMIN').count(),
+                'total_doctors':       User.objects.filter(role='DENTIST').count(),
+                'total_staff':         User.objects.filter(role__in=['ADMIN', 'DENTIST', 'RECEPTION']).count(),
                 'total_patients':      Patient.objects.count(),
                 'total_revenue':       Billing.objects.aggregate(t=Sum('paid_amount'))['t'] or 0,
                 'pending_balance':     Billing.objects.aggregate(t=Sum('balance'))['t'] or 0,
@@ -129,10 +129,10 @@ class DashboardView(generics.GenericAPIView):
                 'critical':       assigned.filter(priority='Critical').count(),
             }
 
-        elif user.role == 'CLINIC_ADMIN':
+        elif user.role == 'ADMIN':
             clinic = user.clinic
             data = {
-                'total_doctors':      User.objects.filter(clinic=clinic, role='DOCTOR').count(),
+                'total_doctors':      User.objects.filter(clinic=clinic, role='DENTIST').count(),
                 'total_reception':    User.objects.filter(clinic=clinic, role='RECEPTION').count(),
                 'total_patients':     Patient.objects.filter(clinic=clinic).count(),
                 'appointments_today': Appointment.objects.filter(clinic=clinic, appointment_date=today).count(),
@@ -141,7 +141,7 @@ class DashboardView(generics.GenericAPIView):
                 'pending_bills':      Billing.objects.filter(clinic=clinic, status='Pending').count(),
             }
 
-        elif user.role == 'DOCTOR':
+        elif user.role == 'DENTIST':
             clinic = user.clinic
             appts_today = Appointment.objects.filter(doctor=user, appointment_date=today)
             data = {

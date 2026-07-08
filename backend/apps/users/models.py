@@ -21,12 +21,13 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
-        SUPER_ADMIN   = 'SUPER_ADMIN',   'Super Admin (Tresvance)'
-        SUPPORT_AGENT = 'SUPPORT_AGENT', 'Support Agent (Tresvance)'
-        CLINIC_ADMIN  = 'CLINIC_ADMIN',  'Clinic Admin'
-        DOCTOR        = 'DOCTOR',        'Doctor'
-        NURSE         = 'NURSE',         'Nurse'
-        RECEPTION     = 'RECEPTION',     'Receptionist'
+        SUPER_ADMIN     = 'SUPER_ADMIN',     'Super Admin (Tresvance)'
+        SUPPORT_AGENT   = 'SUPPORT_AGENT',   'Support Agent (Tresvance)'
+        ADMIN           = 'ADMIN',           'Admin'
+        DENTIST         = 'DENTIST',         'Dentist'
+        HYGIENIST       = 'HYGIENIST',       'Hygienist/Assistant'
+        RECEPTION       = 'RECEPTION',       'Receptionist'
+        ACCOUNT_MANAGER = 'ACCOUNT_MANAGER', 'Account Manager'
 
     first_name = models.CharField(max_length=100)
     last_name  = models.CharField(max_length=100)
@@ -45,6 +46,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff   = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+
+    failed_login_attempts = models.IntegerField(default=0)
+    last_failed_login     = models.DateTimeField(null=True, blank=True)
+    password_last_changed = models.DateTimeField(null=True, blank=True)
+    force_password_change = models.BooleanField(default=True)
 
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -72,16 +78,29 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_clinic_admin(self):
-        return self.role == self.Role.CLINIC_ADMIN
+        return self.role == self.Role.ADMIN
 
     @property
     def is_doctor(self):
-        return self.role == self.Role.DOCTOR
+        return self.role == self.Role.DENTIST
 
     @property
     def is_nurse(self):
-        return self.role == self.Role.NURSE
+        return self.role == self.Role.HYGIENIST
 
     @property
     def is_reception(self):
         return self.role == self.Role.RECEPTION
+
+    @property
+    def is_account_manager(self):
+        return self.role == self.Role.ACCOUNT_MANAGER
+
+class UserPasswordHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_history')
+    password = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_password_history'
+        ordering = ['-created_at']
