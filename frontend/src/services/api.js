@@ -60,6 +60,18 @@ export const usersAPI = {
   delete: (id) => api.delete(`/auth/users/${id}/`),
 };
 
+// ── Staff Credentials & Audit Logs ────────────────────
+export const staffCredentialsAPI = {
+  list: (params) => api.get('/auth/staff-credentials/', { params }),
+  create: (data) => api.post('/auth/staff-credentials/', data),
+  delete: (id) => api.delete(`/auth/staff-credentials/${id}/`),
+};
+
+export const auditLogsAPI = {
+  list: (params) => api.get('/auth/audit-logs/', { params }),
+};
+
+
 // ── Clinics ───────────────────────────────────────────
 export const clinicsAPI = {
   list: (params) => api.get('/clinics/', { params }),

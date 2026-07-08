@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, Building2, UserPlus, Calendar,
   FileText, Pill, CreditCard, LogOut, Menu, X, Clock,
-  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt,TrendingUp
+  Stethoscope, ChevronDown, ShieldCheck, Ticket, HeadphonesIcon, Receipt, TrendingUp,
+  Settings as SettingsIcon, Shield
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -16,28 +17,35 @@ const navConfig = {
     { to: '/super/payments',       icon: Receipt,         label: 'All Payments' },
     { to: '/super/clinic-admins',  icon: ShieldCheck,     label: 'Clinic Admins' },
     { to: '/super/agents',         icon: HeadphonesIcon,  label: 'Support Agents' },
+    { to: '/super/audit-logs',     icon: Shield,          label: 'Audit Logs' },
     { divider: true },
     { to: '/support/dashboard',    icon: LayoutDashboard, label: 'Support Dashboard' },
     { to: '/support/tickets',      icon: Ticket,          label: 'All Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
   ],
   SUPPORT_AGENT: [
     { to: '/support/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/support/tickets',      icon: Ticket,          label: 'My Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
   ],
   ADMIN: [
     { to: '/clinic/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/clinic/staff',         icon: Users,           label: 'Staff' },
     { to: '/clinic/shifts',        icon: Clock,           label: 'Shifts' },
     { to: '/patients',             icon: UserPlus,        label: 'Patients' },
-
     { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
     { to: '/records',              icon: FileText,        label: 'Records' },
     { to: '/medicines',            icon: Pill,            label: 'Medicines' },
     { to: '/billing',              icon: CreditCard,      label: 'Billing' },
     { to: '/clinic/payments',      icon: Receipt,         label: 'Payment History' },
     { to: '/clinic/reports',       icon: TrendingUp,      label: 'Patient Analytics' },
+    { to: '/clinic/audit-logs',    icon: Shield,          label: 'Audit Logs' },
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
   ],
   DENTIST: [
     { to: '/doctor/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,6 +55,8 @@ const navConfig = {
     { to: '/medicines',            icon: Pill,            label: 'Medicines' },
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
   ],
   RECEPTION: [
     { to: '/reception/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
@@ -55,15 +65,34 @@ const navConfig = {
     { to: '/billing',              icon: CreditCard,      label: 'Billing' },
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
+  ],
+  HYGIENIST: [
+    { to: '/patients',             icon: UserPlus,        label: 'Patients' },
+    { to: '/appointments',         icon: Calendar,        label: 'Appointments' },
+    { divider: true },
+    { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
+  ],
+  ACCOUNT_MANAGER: [
+    { to: '/billing',              icon: CreditCard,      label: 'Billing' },
+    { divider: true },
+    { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
+    { divider: true },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
   ],
 };
 
 const roleLabels = {
-  SUPER_ADMIN:   { label: 'Super Admin',    color: 'bg-red-100 text-red-700' },
-  SUPPORT_AGENT: { label: 'Support Agent',  color: 'bg-yellow-100 text-yellow-700' },
-  ADMIN:  { label: 'Clinic Admin',   color: 'bg-purple-100 text-purple-700' },
-  DENTIST:        { label: 'DENTIST',         color: 'bg-green-100 text-green-700' },
-  RECEPTION:     { label: 'Receptionist',   color: 'bg-blue-100 text-blue-700' },
+  SUPER_ADMIN:     { label: 'Super Admin',         color: 'bg-red-100 text-red-700' },
+  SUPPORT_AGENT:   { label: 'Support Agent',       color: 'bg-yellow-100 text-yellow-700' },
+  ADMIN:           { label: 'Clinic Admin',        color: 'bg-purple-100 text-purple-700' },
+  DENTIST:         { label: 'Dentist',             color: 'bg-green-100 text-green-700' },
+  RECEPTION:       { label: 'Receptionist',        color: 'bg-blue-100 text-blue-700' },
+  HYGIENIST:       { label: 'Hygienist/Assistant', color: 'bg-teal-100 text-teal-700' },
+  ACCOUNT_MANAGER: { label: 'Account Manager',     color: 'bg-indigo-100 text-indigo-700' },
 };
 
 export default function Layout() {
@@ -168,8 +197,12 @@ export default function Layout() {
               </button>
               {userMenuOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <NavLink to="/settings" onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg border-b border-gray-100">
+                    <SettingsIcon className="w-4 h-4" /> Settings
+                  </NavLink>
                   <button onClick={handleLogout}
-                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">
                     <LogOut className="w-4 h-4" /> Logout
                   </button>
                 </div>

@@ -24,6 +24,8 @@ import PaymentHistory       from './pages/PaymentHistory';
 import Shifts               from './pages/Shifts';
 import PatientReports       from './pages/PatientReports';
 import Layout               from './components/Layout';
+import Settings             from './pages/Settings';
+import AuditLogs            from './pages/AuditLogs';
 
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -44,9 +46,11 @@ const DashboardRedirect = () => {
   const map = {
     SUPER_ADMIN:   '/super/dashboard',
     SUPPORT_AGENT: '/support/dashboard',
-    ADMIN:  '/clinic/dashboard',
-    DENTIST:        '/doctor/dashboard',
+    ADMIN:         '/clinic/dashboard',
+    DENTIST:       '/doctor/dashboard',
     RECEPTION:     '/reception/dashboard',
+    HYGIENIST:     '/patients',
+    ACCOUNT_MANAGER: '/billing',
   };
   return <Navigate to={map[user?.role] || '/login'} replace />;
 };
@@ -66,6 +70,7 @@ function AppRoutes() {
         <Route path="super/clinic-admins" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Users /></ProtectedRoute>} />
         <Route path="super/agents"        element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Users /></ProtectedRoute>} />
         <Route path="super/payments"      element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PaymentHistory /></ProtectedRoute>} />
+        <Route path="super/audit-logs"    element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AuditLogs /></ProtectedRoute>} />
 
         {/* ── Clinic Admin ────────────────────────────── */}
         <Route path="clinic/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><ClinicAdminDashboard /></ProtectedRoute>} />
@@ -73,6 +78,7 @@ function AppRoutes() {
         <Route path="clinic/shifts"    element={<ProtectedRoute allowedRoles={['ADMIN']}><Shifts /></ProtectedRoute>} />
         <Route path="clinic/reports"   element={<ProtectedRoute allowedRoles={['ADMIN']}><PatientReports /></ProtectedRoute>} />
         <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['ADMIN']}><PaymentHistory /></ProtectedRoute>} />
+        <Route path="clinic/audit-logs" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuditLogs /></ProtectedRoute>} />
 
 
         {/* ── Doctor ──────────────────────────────────── */}
@@ -90,14 +96,17 @@ function AppRoutes() {
         <Route path="support/tickets/:id"    element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
 
         {/* ── Shared Clinical ─────────────────────────── */}
-        <Route path="patients"              element={<ProtectedRoute><Patients /></ProtectedRoute>} />
+        <Route path="patients"              element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','DENTIST','RECEPTION','HYGIENIST']}><Patients /></ProtectedRoute>} />
         <Route path="patients/new"          element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
         <Route path="patients/:id/edit"     element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','RECEPTION']}><AddPatient /></ProtectedRoute>} />
-        <Route path="patients/:id/documents" element={<ProtectedRoute><PatientDocuments /></ProtectedRoute>} />
-        <Route path="appointments"          element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
-        <Route path="records"            element={<ProtectedRoute><Records /></ProtectedRoute>} />
-        <Route path="medicines"          element={<ProtectedRoute><Medicines /></ProtectedRoute>} />
-        <Route path="billing"            element={<ProtectedRoute><Billing /></ProtectedRoute>} />
+        <Route path="patients/:id/documents" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','DENTIST','RECEPTION','HYGIENIST']}><PatientDocuments /></ProtectedRoute>} />
+        <Route path="appointments"          element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','DENTIST','RECEPTION','HYGIENIST']}><Appointments /></ProtectedRoute>} />
+        <Route path="records"               element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','DENTIST']}><Records /></ProtectedRoute>} />
+        <Route path="medicines"             element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','DENTIST']}><Medicines /></ProtectedRoute>} />
+        <Route path="billing"               element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ADMIN','RECEPTION','ACCOUNT_MANAGER']}><Billing /></ProtectedRoute>} />
+
+        {/* ── Settings (All Roles) ────────────────────── */}
+        <Route path="settings"           element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
