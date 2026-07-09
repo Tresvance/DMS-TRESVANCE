@@ -44,6 +44,17 @@ class Patient(models.Model):
         DECEASED = 'DECEASED', 'Deceased'
         ARCHIVED = 'ARCHIVED', 'Archived'
 
+    class SmokerStatus(models.TextChoices):
+        NEVER = 'NEVER', 'Never Smoked'
+        FORMER = 'FORMER', 'Former Smoker'
+        CURRENT = 'CURRENT', 'Current Smoker'
+
+    class AlcoholConsumption(models.TextChoices):
+        NONE = 'NONE', 'None'
+        OCCASIONAL = 'OCCASIONAL', 'Occasional'
+        REGULAR = 'REGULAR', 'Regular'
+        HEAVY = 'HEAVY', 'Heavy'
+
     clinic = models.ForeignKey('clinics.Clinic', on_delete=models.CASCADE, related_name='patients')
     patient_id = models.CharField(max_length=20, unique=True, default=generate_patient_id)
     first_name = models.CharField(max_length=100)
@@ -67,6 +78,18 @@ class Patient(models.Model):
     blood_group = models.CharField(max_length=10, choices=BloodGroup.choices, default=BloodGroup.UNKNOWN)
     allergies = models.TextField(blank=True)
     medical_history = models.TextField(blank=True)
+    
+    # Comprehensive Medical Questionnaire
+    has_diabetes = models.BooleanField(default=False)
+    has_hypertension = models.BooleanField(default=False)
+    has_heart_disease = models.BooleanField(default=False)
+    other_conditions = models.TextField(blank=True, help_text="List any other medical conditions")
+    
+    # Lifestyle & Pregnancy
+    smoker_status = models.CharField(max_length=20, choices=SmokerStatus.choices, default=SmokerStatus.NEVER)
+    alcohol_consumption = models.CharField(max_length=20, choices=AlcoholConsumption.choices, default=AlcoholConsumption.NONE)
+    is_pregnant = models.BooleanField(default=False, help_text="For female patients")
+    pregnancy_due_date = models.DateField(null=True, blank=True)
     
     # Emergency Contact
     emergency_contact_name = models.CharField(max_length=150, blank=True)
@@ -258,3 +281,57 @@ class PatientConsent(models.Model):
         if self.expires_at and self.expires_at < timezone.now():
             return False
         return True
+
+class PatientAllergy(models.Model):
+    class Severity(models.TextChoices):
+        MILD = 'MILD', 'Mild'
+        MODERATE = 'MODERATE', 'Moderate'
+        SEVERE = 'SEVERE', 'Severe'
+        LIFE_THREATENING = 'LIFE_THREATENING', 'Life-Threatening'
+        
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='detailed_allergies')
+    allergen = models.CharField(max_length=150)
+    severity = models.CharField(max_length=20, choices=Severity.choices, default=Severity.MILD)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'patient_allergies'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.allergen} ({self.get_severity_display()}) - {self.patient}"
+
+class PatientMedication(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medications')
+    medication_name = models.CharField(max_length=150)
+    dosage = models.CharField(max_length=100, blank=True)
+    frequency = models.CharField(max_length=100, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'patient_medications'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.medication_name} - {self.patient}"
+
+class DentalSurgeryHistory(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='dental_surgeries')
+    procedure_name = models.CharField(max_length=200)
+    procedure_date = models.DateField(null=True, blank=True)
+    complications = models.TextField(blank=True)
+    dentist_name = models.CharField(max_length=150, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'dental_surgery_history'
+        ordering = ['-procedure_date']
+
+    def __str__(self):
+        return f"{self.procedure_name} - {self.patient}"
