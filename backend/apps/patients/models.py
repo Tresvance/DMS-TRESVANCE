@@ -120,6 +120,18 @@ class Patient(models.Model):
         """Returns True if the patient was created within the last 7 days."""
         return self.created_at >= timezone.now() - timedelta(days=7)
 
+    @property
+    def loyalty_tier(self):
+        """Calculates loyalty tier based on number of visits/medical records."""
+        visit_count = self.medical_records.count()
+        if visit_count >= 11:
+            return 'Platinum'
+        elif visit_count >= 6:
+            return 'Gold'
+        elif visit_count >= 3:
+            return 'Silver'
+        return 'Bronze'
+
 
 def patient_document_path(instance, filename):
     """Generate upload path: patient_documents/{clinic_id}/{patient_id}/{filename}"""
