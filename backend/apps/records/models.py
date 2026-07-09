@@ -18,6 +18,18 @@ class MedicalRecord(models.Model):
     procedures_done = models.TextField(blank=True)
     next_visit_date = models.DateField(null=True, blank=True)
     attachments = models.FileField(upload_to='records/attachments/', null=True, blank=True)
+    
+    # Periodontal tracking
+    periodontal_status = models.TextField(blank=True, help_text="Detailed periodontal and gum health status")
+    
+    # Digital Signature / Authorization
+    is_signed = models.BooleanField(default=False)
+    signed_by = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='signed_records'
+    )
+    signed_at = models.DateTimeField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -46,3 +58,30 @@ class ClinicalNote(models.Model):
 
     def __str__(self):
         return f"Note by {self.author} on {self.created_at.date()}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            # Get original note to check for changes
+            old_note = ClinicalNote.objects.get(pk=self.pk)
+            if old_note.content != self.content:
+                # Save snapshot before update
+                ClinicalNoteVersion.objects.create(
+                    note=self,
+                    content_snapshot=old_note.content,
+                    modified_by=self.author  # Assuming the author makes the change, otherwise we'd need to pass the current user
+                )
+        super().save(*args, **kwargs)
+
+class ClinicalNoteVersion(models.Model):
+    note = models.ForeignKey(ClinicalNote, on_delete=models.CASCADE, related_name='versions')
+    content_snapshot = models.TextField()
+    modified_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='note_modifications')
+    modified_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'clinical_note_versions'
+        ordering = ['-modified_at']
+
+    def __str__(self):
+        return f"Version of {self.note} at {self.modified_at}"
