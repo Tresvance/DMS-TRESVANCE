@@ -11,7 +11,7 @@ from django.db.models import Count, Q, Exists, OuterRef, Value, Sum
 from django.db.models.functions import Coalesce
 from django.db import models
 
-from .models import Patient, PatientDocument, PatientConsent
+from .models import Patient, PatientDocument, PatientConsent, PatientAllergy, PatientMedication, DentalSurgeryHistory
 from apps.appointments.models import Appointment
 from apps.records.models import MedicalRecord
 from apps.billing.models import Billing
@@ -19,7 +19,8 @@ from apps.records.fhir_utils import FHIRMapper
 from .serializers import (
     PatientSerializer, PatientListSerializer,
     PatientDocumentSerializer, PatientDocumentUploadSerializer,
-    PatientConsentSerializer
+    PatientConsentSerializer, PatientAllergySerializer, 
+    PatientMedicationSerializer, DentalSurgeryHistorySerializer
 )
 from apps.users.permissions import IsAdminOrReception
 
@@ -393,3 +394,63 @@ class PatientDocumentViewSet(viewsets.ModelViewSet):
             {'value': choice[0], 'label': choice[1]}
             for choice in PatientDocument.DocumentType.choices
         ])
+
+
+class PatientAllergyViewSet(viewsets.ModelViewSet):
+    serializer_class = PatientAllergySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        patient_id = self.kwargs.get('patient_pk')
+        if not patient_id:
+            return PatientAllergy.objects.none()
+            
+        qs = PatientAllergy.objects.filter(patient_id=patient_id)
+        if user.role != 'SUPER_ADMIN':
+            qs = qs.filter(patient__clinic=user.clinic)
+        return qs
+
+    def perform_create(self, serializer):
+        patient_id = self.kwargs.get('patient_pk')
+        serializer.save(patient_id=patient_id)
+
+
+class PatientMedicationViewSet(viewsets.ModelViewSet):
+    serializer_class = PatientMedicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        patient_id = self.kwargs.get('patient_pk')
+        if not patient_id:
+            return PatientMedication.objects.none()
+            
+        qs = PatientMedication.objects.filter(patient_id=patient_id)
+        if user.role != 'SUPER_ADMIN':
+            qs = qs.filter(patient__clinic=user.clinic)
+        return qs
+
+    def perform_create(self, serializer):
+        patient_id = self.kwargs.get('patient_pk')
+        serializer.save(patient_id=patient_id)
+
+
+class DentalSurgeryHistoryViewSet(viewsets.ModelViewSet):
+    serializer_class = DentalSurgeryHistorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        patient_id = self.kwargs.get('patient_pk')
+        if not patient_id:
+            return DentalSurgeryHistory.objects.none()
+            
+        qs = DentalSurgeryHistory.objects.filter(patient_id=patient_id)
+        if user.role != 'SUPER_ADMIN':
+            qs = qs.filter(patient__clinic=user.clinic)
+        return qs
+
+    def perform_create(self, serializer):
+        patient_id = self.kwargs.get('patient_pk')
+        serializer.save(patient_id=patient_id)

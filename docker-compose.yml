@@ -16,19 +16,7 @@ services:
     volumes:
       - ./backend:/app
       - media_files:/app/media
-    command: >
-      sh -c "python manage.py makemigrations users &&
-             python manage.py makemigrations clinics &&
-             python manage.py makemigrations patients &&
-             python manage.py makemigrations appointments &&
-             python manage.py makemigrations records &&
-             python manage.py makemigrations medicines &&
-             python manage.py makemigrations billing &&
-             python manage.py makemigrations support &&
-             python manage.py makemigrations shifts &&
-             python manage.py migrate &&
-
-             python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
 
   # ── React Frontend ──────────────────────────────
   frontend:

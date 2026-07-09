@@ -13,6 +13,7 @@ export default function ClinicalNotesManager({ recordId, clinicId }) {
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [versionsModal, setVersionsModal] = useState({ open: false, noteId: null, versions: [] });
 
   useEffect(() => {
     loadNotes();
@@ -76,6 +77,15 @@ export default function ClinicalNotesManager({ recordId, clinicId }) {
     }
   };
 
+  const handleViewVersions = async (id) => {
+    try {
+      const res = await clinicalNotesAPI.getVersions(id);
+      setVersionsModal({ open: true, noteId: id, versions: res.data });
+    } catch (err) {
+      toast.error('Failed to load version history');
+    }
+  };
+
   if (loading) return <div className="p-8 text-center"><Spinner /></div>;
 
   return (
@@ -104,14 +114,23 @@ export default function ClinicalNotesManager({ recordId, clinicId }) {
                 {(user.id === note.author || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                   <div className="flex gap-1">
                     <button 
+                      onClick={() => handleViewVersions(note.id)}
+                      className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                      title="View Edit History"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
                       onClick={() => { setEditingId(note.id); setEditContent(note.content); }}
                       className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Note"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => handleDeleteNote(note.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Note"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -168,6 +187,33 @@ export default function ClinicalNotesManager({ recordId, clinicId }) {
           </div>
         </form>
       </div>
+
+      {/* Versions Modal Inline */}
+      {versionsModal.open && (
+        <div className="fixed inset-0 z-[60] bg-gray-900/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2"><History className="w-4 h-4 text-blue-600" /> Edit History</h3>
+              <button onClick={() => setVersionsModal({ open: false, noteId: null, versions: [] })} className="text-gray-400 hover:text-gray-600 text-xl font-bold px-2">&times;</button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
+              {versionsModal.versions.length === 0 ? (
+                <div className="text-center text-gray-500 py-4">No previous versions found.</div>
+              ) : (
+                versionsModal.versions.map((v, i) => (
+                  <div key={v.id} className="p-3 bg-gray-50 rounded border text-sm">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1 border-b pb-1">
+                      <span className="font-semibold">Modified by {v.modified_by_name || 'Unknown'}</span>
+                      <span>{new Date(v.modified_at).toLocaleString()}</span>
+                    </div>
+                    <div className="whitespace-pre-wrap text-gray-700 mt-2">{v.content_snapshot}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

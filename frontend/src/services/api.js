@@ -119,6 +119,19 @@ export const patientsAPI = {
   analytics: () => api.get('/patients/analytics/'),
   autoArchive: () => api.post('/patients/auto_archive/'),
   restoreArchive: (id) => api.post(`/patients/${id}/restore/`),
+  
+  // Medical Lists
+  getAllergies: (id) => api.get(`/patients/${id}/allergies/`),
+  createAllergy: (id, data) => api.post(`/patients/${id}/allergies/`, data),
+  deleteAllergy: (id, allergyId) => api.delete(`/patients/${id}/allergies/${allergyId}/`),
+  
+  getMedications: (id) => api.get(`/patients/${id}/medications/`),
+  createMedication: (id, data) => api.post(`/patients/${id}/medications/`, data),
+  deleteMedication: (id, medId) => api.delete(`/patients/${id}/medications/${medId}/`),
+  
+  getSurgeries: (id) => api.get(`/patients/${id}/surgeries/`),
+  createSurgery: (id, data) => api.post(`/patients/${id}/surgeries/`, data),
+  deleteSurgery: (id, surgId) => api.delete(`/patients/${id}/surgeries/${surgId}/`),
 };
 
 // ── Patient Documents (X-rays, Scans, Reports) ────────
@@ -152,6 +165,7 @@ export const recordsAPI = {
   update: (id, data) => api.put(`/records/${id}/`, data),
   patch: (id, data) => api.patch(`/records/${id}/`, data),
   delete: (id) => api.delete(`/records/${id}/`),
+  sign: (id) => api.post(`/records/${id}/sign/`),
 };
 
 // ── Medicines ─────────────────────────────────────────
@@ -215,6 +229,7 @@ export const clinicalNotesAPI = {
   update: (id, data) => api.patch(`/records/notes/${id}/`, data),
   delete: (id) => api.delete(`/records/notes/${id}/`),
   listByRecord: (recordId) => api.get('/records/notes/', { params: { medical_record: recordId } }),
+  getVersions: (id) => api.get(`/records/notes/${id}/versions/`),
 };
 
 export default api;

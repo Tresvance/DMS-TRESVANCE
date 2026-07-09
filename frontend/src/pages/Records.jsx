@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { PageHeader, Table, Spinner, EmptyState, ConfirmDialog, Modal, FormField, SearchBar } from '../components/UI';
 import ClinicalNotesManager from '../components/ClinicalNotesManager';
 import AdvancedSearch from '../components/AdvancedSearch';
-import { Plus, Edit2, Trash2, FileText, Loader2, MessageSquare } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Loader2, MessageSquare, Lock, Unlock, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const INITIAL_FORM = { patient: '', DENTIST: '', diagnosis: '', treatment_plan: '', prescription: '', procedures_done: '', next_visit_date: '' };
+const INITIAL_FORM = { patient: '', doctor: '', diagnosis: '', treatment_plan: '', prescription: '', procedures_done: '', periodontal_status: '', next_visit_date: '' };
 
 export default function Records() {
   const { user } = useAuth();
@@ -53,8 +53,18 @@ export default function Records() {
   useEffect(() => { load(); }, [load]);
 
   const openEdit = (r) => {
-    setForm({ patient: r.patient, DENTIST: r.doctor, diagnosis: r.diagnosis, treatment_plan: r.treatment_plan, prescription: r.prescription || '', procedures_done: r.procedures_done || '', next_visit_date: r.next_visit_date || '' });
+    if (r.is_signed) return; // Prevent editing signed records
+    setForm({ patient: r.patient, doctor: r.doctor, diagnosis: r.diagnosis, treatment_plan: r.treatment_plan, prescription: r.prescription || '', procedures_done: r.procedures_done || '', periodontal_status: r.periodontal_status || '', next_visit_date: r.next_visit_date || '' });
     setEditId(r.id); setModalOpen(true);
+  };
+
+  const handleSignRecord = async (r) => {
+    if (!confirm(`Are you sure you want to sign and lock this medical record? This cannot be undone.`)) return;
+    try {
+      await recordsAPI.sign(r.id);
+      toast.success('Record signed and locked successfully.');
+      load();
+    } catch { toast.error('Failed to sign record.'); }
   };
 
   const handleSave = async (e) => {
@@ -99,14 +109,18 @@ export default function Records() {
                 <td className="table-cell">{r.doctor_name}</td>
                 <td className="table-cell max-w-xs truncate">{r.diagnosis}</td>
                 <td className="table-cell max-w-xs truncate text-gray-500">{r.treatment_plan}</td>
-                <td className="table-cell">{r.next_visit_date ? new Date(r.next_visit_date).toLocaleDateString() : '—'}</td>
+                <td className="table-cell">
+                  {r.next_visit_date ? new Date(r.next_visit_date).toLocaleDateString() : '—'}
+                  {r.is_signed && <div className="mt-1 flex items-center text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded w-max"><ShieldCheck className="w-3 h-3 mr-1"/> Signed</div>}
+                </td>
                 <td className="table-cell text-gray-400 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
                 {canEdit && (
                   <td className="table-cell">
                     <div className="flex gap-2">
                       <button onClick={() => setNotesTarget(r)} title="Clinical Notes" className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><MessageSquare className="w-4 h-4" /></button>
-                      <button onClick={() => openEdit(r)} title="Edit Record" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => setDeleteTarget(r)} title="Delete Record" className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      {!r.is_signed && <button onClick={() => handleSignRecord(r)} title="Sign & Lock Record" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg"><Lock className="w-4 h-4" /></button>}
+                      {!r.is_signed && <button onClick={() => openEdit(r)} title="Edit Record" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>}
+                      {!r.is_signed && <button onClick={() => setDeleteTarget(r)} title="Delete Record" className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>}
                     </div>
                   </td>
                 )}
@@ -126,8 +140,8 @@ export default function Records() {
               </select>
             </FormField>
             {user?.role !== 'DENTIST' && (
-              <FormField label="DENTIST" required>
-                <select value={form.doctor} onChange={fc('DENTIST')} className="input-field">
+              <FormField label="Doctor" required>
+                <select value={form.doctor} onChange={fc('doctor')} className="input-field">
                   <option value="">Select doctor</option>
                   {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.full_name}</option>)}
                 </select>
@@ -140,7 +154,7 @@ export default function Records() {
           <FormField label="Treatment Plan" required>
             <textarea value={form.treatment_plan} onChange={fc('treatment_plan')} className="input-field" rows={2} placeholder="Treatment plan..." />
           </FormField>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Prescription">
               <textarea value={form.prescription} onChange={fc('prescription')} className="input-field" rows={2} placeholder="Medications prescribed..." />
             </FormField>
@@ -148,8 +162,11 @@ export default function Records() {
               <textarea value={form.procedures_done} onChange={fc('procedures_done')} className="input-field" rows={2} placeholder="Procedures performed..." />
             </FormField>
           </div>
+          <FormField label="Periodontal Status">
+            <textarea value={form.periodontal_status} onChange={fc('periodontal_status')} className="input-field" rows={2} placeholder="Periodontal and gum health status..." />
+          </FormField>
           <FormField label="Next Visit Date">
-            <input type="date" value={form.next_visit_date} onChange={fc('next_visit_date')} className="input-field" />
+            <input type="date" value={form.next_visit_date} onChange={fc('next_visit_date')} className="input-field max-w-xs" />
           </FormField>
           <div className="flex gap-3 justify-end pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Cancel</button>

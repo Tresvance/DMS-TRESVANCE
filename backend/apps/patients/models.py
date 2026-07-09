@@ -132,7 +132,6 @@ class Patient(models.Model):
 
     @property
     def age(self):
-        from django.utils import timezone
         today = timezone.now().date()
         return today.year - self.date_of_birth.year - (
             (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
@@ -145,8 +144,8 @@ class Patient(models.Model):
 
     @property
     def loyalty_tier(self):
-        """Calculates loyalty tier based on number of visits/medical records."""
-        visit_count = self.medical_records.count()
+        """Returns loyalty tier based on number of completed appointments"""
+        visit_count = self.appointments.filter(status='Completed').count()
         if visit_count >= 11:
             return 'Platinum'
         elif visit_count >= 6:
@@ -154,6 +153,13 @@ class Patient(models.Model):
         elif visit_count >= 3:
             return 'Silver'
         return 'Bronze'
+
+    @property
+    def outstanding_balance(self):
+        """Calculates total outstanding balance from all billing records."""
+        from django.db.models import Sum
+        total = self.billings.aggregate(total=Sum('balance'))['total']
+        return total or 0
 
 
 def patient_document_path(instance, filename):
@@ -275,12 +281,12 @@ class PatientConsent(models.Model):
 
     @property
     def is_active(self):
-        from django.utils import timezone
         if self.status != self.ConsentStatus.GRANTED:
             return False
         if self.expires_at and self.expires_at < timezone.now():
             return False
         return True
+
 
 class PatientAllergy(models.Model):
     class Severity(models.TextChoices):
@@ -303,6 +309,7 @@ class PatientAllergy(models.Model):
     def __str__(self):
         return f"{self.allergen} ({self.get_severity_display()}) - {self.patient}"
 
+
 class PatientMedication(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='medications')
     medication_name = models.CharField(max_length=150)
@@ -319,6 +326,7 @@ class PatientMedication(models.Model):
 
     def __str__(self):
         return f"{self.medication_name} - {self.patient}"
+
 
 class DentalSurgeryHistory(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='dental_surgeries')

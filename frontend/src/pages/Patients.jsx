@@ -215,7 +215,7 @@ export default function Patients() {
           <EmptyState message="No patients found" icon={Users} />
         ) : (
           <div className="min-h-[450px]">
-            <Table headers={['Patient ID', 'Name', 'Gender', 'Phone', 'Status', 'Consent', 'Registered', 'Actions']}>
+            <Table headers={['Patient ID', 'Name', 'Gender', 'Phone', 'Balance', 'Status', 'Consent', 'Registered', 'Actions']}>
             {patients.map(p => {
               const statusCfg = getStatusConfig(p.status || 'ACTIVE');
               return (
@@ -233,6 +233,15 @@ export default function Patients() {
                         )}
                         {p.is_new && (
                           <span className="px-1.5 py-0.5 text-[9px] font-black bg-blue-600 text-white rounded-md tracking-tighter uppercase animate-pulse">NEW</span>
+                        )}
+                        {p.loyalty_tier && (
+                          <span className={`px-1.5 py-0.5 text-[9px] font-black text-white rounded-md tracking-tighter uppercase 
+                            ${p.loyalty_tier === 'Platinum' ? 'bg-slate-800' : 
+                              p.loyalty_tier === 'Gold' ? 'bg-yellow-500' : 
+                              p.loyalty_tier === 'Silver' ? 'bg-gray-400' : 
+                              'bg-amber-700'}`}>
+                            {p.loyalty_tier}
+                          </span>
                         )}
                         {!p.has_treatment_consent && (
                           <AlertCircle className="w-4 h-4 text-amber-500" title="Missing Treatment Consent" />
@@ -253,6 +262,11 @@ export default function Patients() {
                     <span className="text-xs text-gray-500 font-medium">{p.gender} • {p.age} yrs</span>
                   </td>
                   <td className="table-cell font-medium text-gray-600">{p.phone}</td>
+                  <td className="table-cell">
+                    <span className={`font-bold ${parseFloat(p.outstanding_balance) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      ₹{parseFloat(p.outstanding_balance || 0).toFixed(2)}
+                    </span>
+                  </td>
                   <td className="table-cell">
                     <div className="relative min-w-[80px]">
                       <button 

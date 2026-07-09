@@ -1,10 +1,13 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.utils import timezone
 
-from .models import MedicalRecord, ClinicalNote
-from .serializers import MedicalRecordSerializer, ClinicalNoteSerializer
+from .models import MedicalRecord, ClinicalNote, ClinicalNoteVersion
+from .serializers import MedicalRecordSerializer, ClinicalNoteSerializer, ClinicalNoteVersionSerializer
 from apps.users.permissions import IsAdminOrDoctor
 
 
@@ -50,6 +53,18 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
             
         serializer.save(clinic=clinic, doctor=doctor)
 
+    @action(detail=True, methods=['post'])
+    def sign(self, request, pk=None):
+        record = self.get_object()
+        if record.is_signed:
+            return Response({"error": "Record is already signed."}, status=400)
+            
+        record.is_signed = True
+        record.signed_by = request.user
+        record.signed_at = timezone.now()
+        record.save()
+        return Response(MedicalRecordSerializer(record).data)
+
 
 class ClinicalNoteViewSet(viewsets.ModelViewSet):
     serializer_class = ClinicalNoteSerializer
@@ -62,3 +77,10 @@ class ClinicalNoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(detail=True, methods=['get'])
+    def versions(self, request, pk=None):
+        note = self.get_object()
+        versions = ClinicalNoteVersion.objects.filter(note=note)
+        serializer = ClinicalNoteVersionSerializer(versions, many=True)
+        return Response(serializer.data)

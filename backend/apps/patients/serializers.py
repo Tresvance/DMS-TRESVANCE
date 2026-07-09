@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Patient, PatientDocument, PatientConsent
+from .models import Patient, PatientDocument, PatientConsent, PatientAllergy, PatientMedication, DentalSurgeryHistory
 
 
 class PatientConsentSerializer(serializers.ModelSerializer):
@@ -22,6 +22,8 @@ class PatientSerializer(serializers.ModelSerializer):
     age = serializers.SerializerMethodField()
     clinic_name = serializers.SerializerMethodField()
     is_new = serializers.BooleanField(read_only=True)
+    loyalty_tier = serializers.CharField(read_only=True)
+    outstanding_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Patient
@@ -30,11 +32,13 @@ class PatientSerializer(serializers.ModelSerializer):
             'full_name', 'gender', 'date_of_birth', 'age', 'marital_status', 'occupation',
             'phone', 'email', 'preferred_contact_method',
             'address', 'city', 'pincode', 'blood_group', 'allergies', 'medical_history',
+            'has_diabetes', 'has_hypertension', 'has_heart_disease', 'other_conditions',
+            'smoker_status', 'alcohol_consumption', 'is_pregnant', 'pregnancy_due_date',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
             'insurance_provider', 'insurance_policy_number', 'insurance_coverage_details',
-            'referring_source', 'status', 'is_active', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'created_at'
+            'referring_source', 'status', 'is_active', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'loyalty_tier', 'outstanding_balance', 'created_at'
         ]
-        read_only_fields = ['id', 'patient_id', 'created_at','clinic', 'is_new']
+        read_only_fields = ['id', 'patient_id', 'created_at','clinic', 'is_new', 'loyalty_tier', 'outstanding_balance']
 
     def get_full_name(self, obj):
         return obj.get_full_name()
@@ -52,12 +56,13 @@ class PatientListSerializer(serializers.ModelSerializer):
     has_treatment_consent = serializers.BooleanField(read_only=True)
     outstanding_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     is_new = serializers.BooleanField(read_only=True)
+    loyalty_tier = serializers.CharField(read_only=True)
 
     class Meta:
         model = Patient
         fields = [
             'id', 'patient_id', 'full_name', 'gender', 'age', 'phone', 
-            'is_active', 'status', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'created_at', 'has_treatment_consent',
+            'is_active', 'status', 'is_new', 'is_vip', 'is_high_risk', 'risk_details', 'loyalty_tier', 'created_at', 'has_treatment_consent',
             'outstanding_balance'
         ]
 
@@ -127,3 +132,26 @@ class PatientDocumentUploadSerializer(serializers.ModelSerializer):
                 f'File type .{ext} not allowed. Allowed: {", ".join(allowed_extensions)}'
             )
         return value
+
+
+class PatientAllergySerializer(serializers.ModelSerializer):
+    severity_display = serializers.CharField(source='get_severity_display', read_only=True)
+
+    class Meta:
+        model = PatientAllergy
+        fields = ['id', 'patient', 'allergen', 'severity', 'severity_display', 'notes', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'patient', 'created_at', 'updated_at']
+
+
+class PatientMedicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientMedication
+        fields = ['id', 'patient', 'medication_name', 'dosage', 'frequency', 'start_date', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'patient', 'created_at', 'updated_at']
+
+
+class DentalSurgeryHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DentalSurgeryHistory
+        fields = ['id', 'patient', 'procedure_name', 'procedure_date', 'complications', 'dentist_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'patient', 'created_at', 'updated_at']

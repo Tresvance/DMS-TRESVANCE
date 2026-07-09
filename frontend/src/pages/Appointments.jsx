@@ -9,7 +9,7 @@ import { Plus, Edit2, Trash2, Calendar, Loader2, Star, AlertCircle } from 'lucid
 import toast from 'react-hot-toast';
 
 const INITIAL_FORM = {
-  patient: '', DENTIST: '', appointment_date: '', appointment_time: '09:00',
+  patient: '', doctor: '', appointment_date: '', appointment_time: '09:00',
   reason: '', status: 'Scheduled', notes: '',
 };
 
@@ -103,7 +103,7 @@ export default function Appointments() {
   const openAdd = () => { setForm(INITIAL_FORM); setEditId(null); setModalOpen(true); };
   const openEdit = (a) => {
     setForm({
-      patient: a.patient, DENTIST: a.doctor, appointment_date: a.appointment_date,
+      patient: a.patient, doctor: a.doctor, appointment_date: a.appointment_date,
       appointment_time: a.appointment_time?.slice(0, 5) || '09:00', 
       reason: a.reason,
       status: a.status, notes: a.notes || '',
@@ -209,7 +209,7 @@ export default function Appointments() {
               </select>
             </FormField>
             <FormField label="DENTIST" required>
-              <select name="DENTIST" value={form.doctor} onChange={e => setForm(f => ({ ...f, DENTIST: e.target.value }))} className="input-field">
+              <select name="doctor" value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} className="input-field">
                 <option value="">Select doctor</option>
                 {doctors.map(d => <option key={d.id} value={d.id}>Dr. {d.full_name}</option>)}
               </select>
