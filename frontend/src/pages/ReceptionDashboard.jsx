@@ -4,6 +4,7 @@ import { authAPI, appointmentsAPI } from '../services/api';
 import { StatCard, Spinner, StatusBadge, Table } from '../components/UI';
 import { Calendar, Users, UserPlus, CreditCard, TrendingUp, Star, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import LiveQueue from '../components/LiveQueue';
 
 export default function ReceptionDashboard() {
   const [stats, setStats] = useState(null);
@@ -51,7 +52,8 @@ export default function ReceptionDashboard() {
         ))}
       </div>
 
-      <div className="card">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-900">Today's Schedule</h2>
           <Link to="/appointments" className="text-sm text-blue-600 hover:underline">View all</Link>
@@ -89,6 +91,11 @@ export default function ReceptionDashboard() {
             ))}
           </Table>
         )}
+        </div>
+        
+        <div className="xl:col-span-1">
+          <LiveQueue title="Check-In Queue" />
+        </div>
       </div>
     </div>
   );

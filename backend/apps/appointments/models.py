@@ -56,6 +56,8 @@ class Appointment(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
     notes = models.TextField(blank=True)
     recurring_group_id = models.CharField(max_length=100, null=True, blank=True)
+    arrival_time = models.DateTimeField(null=True, blank=True)
+    insurance_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -65,3 +67,44 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.patient} - {self.appointment_date} {self.appointment_time}"
+
+
+class WaitlistEntry(models.Model):
+    class Priority(models.TextChoices):
+        EMERGENCY = 'EMERGENCY', 'Emergency'
+        VIP = 'VIP', 'VIP'
+        STANDARD = 'STANDARD', 'Standard'
+
+    class Status(models.TextChoices):
+        WAITING = 'WAITING', 'Waiting'
+        NOTIFIED = 'NOTIFIED', 'Notified'
+        CONFIRMED = 'CONFIRMED', 'Confirmed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    clinic = models.ForeignKey('clinics.Clinic', on_delete=models.CASCADE, related_name='waitlist')
+    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='waitlist_entries')
+    preferred_date = models.DateField(null=True, blank=True)
+    preferred_time_range = models.CharField(max_length=50, blank=True, help_text="e.g. Morning, Afternoon, Any")
+    preferred_doctor = models.ForeignKey(
+        'users.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='waitlist_entries',
+        limit_choices_to={'role': 'DENTIST'}
+    )
+    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.STANDARD)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'waitlist_entries'
+        ordering = [
+            models.Case(
+                models.When(priority='EMERGENCY', then=1),
+                models.When(priority='VIP', then=2),
+                default=3
+            ),
+            'created_at'
+        ]
+
+    def __str__(self):
+        return f"{self.patient} - {self.status} (Priority: {self.priority})"

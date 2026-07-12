@@ -1,15 +1,17 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import OuterRef, Subquery, Exists, Case, When, Value, BooleanField, Q
 from rest_framework.exceptions import ValidationError
+from django.utils import timezone
 from datetime import timedelta, datetime
 import uuid
 
-from .models import Appointment, TreatmentType, BlockTime
-from .serializers import AppointmentSerializer, TreatmentTypeSerializer, BlockTimeSerializer
+from .models import Appointment, TreatmentType, BlockTime, WaitlistEntry
+from .serializers import AppointmentSerializer, TreatmentTypeSerializer, BlockTimeSerializer, WaitlistEntrySerializer
 from apps.clinics.models import ClinicSettings, ClinicHoliday
 from apps.shifts.models import Leave
 
@@ -171,10 +173,30 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if isinstance(apply_buffer, str):
             apply_buffer = apply_buffer.lower() == 'true'
 
+        old_status = self.get_object().status
+        new_status = serializer.validated_data.get('status', old_status)
+
         if doctor and appt_date and start_time and end_time:
             self.check_conflicts(doctor.id, appt_date, start_time, end_time, clinic, exclude_id=self.get_object().id, apply_buffer=apply_buffer)
             
         serializer.save()
+
+        # Waitlist notification logic
+        if old_status != 'Cancelled' and new_status == 'Cancelled':
+            # Check for a waiting patient on the waitlist for this clinic/date
+            waiting_entry = WaitlistEntry.objects.filter(
+                clinic=clinic,
+                status='WAITING',
+                preferred_date=appt_date
+            ).order_by(
+                Case(When(priority='EMERGENCY', then=1), When(priority='VIP', then=2), default=3),
+                'created_at'
+            ).first()
+
+            if waiting_entry:
+                # We simply notify by updating status (WhatsApp will be done later)
+                waiting_entry.status = 'NOTIFIED'
+                waiting_entry.save()
 
     def create(self, request, *args, **kwargs):
         # Handle recurrence logic natively via a custom payload param 'recurrence'
@@ -208,3 +230,53 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return Response(created_instances, status=status.HTTP_201_CREATED)
         else:
             return super().create(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'])
+    def check_in(self, request, pk=None):
+        appointment = self.get_object()
+        
+        # Optionally update contact details if provided
+        phone = request.data.get('phone')
+        email = request.data.get('email')
+        insurance_verified = request.data.get('insurance_verified', False)
+
+        patient = appointment.patient
+        updated_patient = False
+        if phone and phone != patient.phone:
+            patient.phone = phone
+            updated_patient = True
+        if email and email != patient.email:
+            patient.email = email
+            updated_patient = True
+            
+        if updated_patient:
+            patient.save()
+
+        appointment.status = Appointment.Status.CHECKED_IN
+        appointment.arrival_time = timezone.now()
+        if str(insurance_verified).lower() == 'true':
+            appointment.insurance_verified = True
+        appointment.save()
+
+        serializer = self.get_serializer(appointment)
+        return Response(serializer.data)
+
+
+class WaitlistEntryViewSet(viewsets.ModelViewSet):
+    serializer_class = WaitlistEntrySerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'priority', 'preferred_date']
+    search_fields = ['patient__first_name', 'patient__last_name']
+    ordering_fields = ['created_at', 'preferred_date']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPER_ADMIN':
+            return WaitlistEntry.objects.all()
+        return WaitlistEntry.objects.filter(clinic=user.clinic)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        clinic = user.clinic if user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic')
+        serializer.save(clinic=clinic)

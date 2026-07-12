@@ -169,6 +169,16 @@ export const appointmentsAPI = {
   update: (id, data) => api.put(`/appointments/${id}/`, data),
   patch: (id, data) => api.patch(`/appointments/${id}/`, data),
   delete: (id) => api.delete(`/appointments/${id}/`),
+  checkIn: (id, data) => api.post(`/appointments/${id}/check_in/`, data),
+};
+
+export const waitlistAPI = {
+  list: (params) => api.get('/appointments/waitlist/', { params }),
+  get: (id) => api.get(`/appointments/waitlist/${id}/`),
+  create: (data) => api.post('/appointments/waitlist/', data),
+  update: (id, data) => api.put(`/appointments/waitlist/${id}/`, data),
+  patch: (id, data) => api.patch(`/appointments/waitlist/${id}/`, data),
+  delete: (id) => api.delete(`/appointments/waitlist/${id}/`),
 };
 
 export const treatmentTypesAPI = {

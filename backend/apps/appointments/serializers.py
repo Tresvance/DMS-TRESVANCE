@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Appointment, TreatmentType, BlockTime
+from .models import Appointment, TreatmentType, BlockTime, WaitlistEntry
 
 
 class TreatmentTypeSerializer(serializers.ModelSerializer):
@@ -35,6 +35,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'appointment_date', 'appointment_time', 'end_time',
             'reason', 'status', 'notes', 'recurring_group_id', 'is_first_visit', 
             'patient_is_vip', 'patient_is_high_risk', 'patient_risk_details',
+            'arrival_time', 'insurance_verified',
             'created_at'
         ]
         read_only_fields = ['id', 'created_at', 'clinic', 'is_first_visit', 'patient_is_vip', 'patient_is_high_risk'] 
@@ -54,3 +55,19 @@ class AppointmentSerializer(serializers.ModelSerializer):
     patient_is_vip         = serializers.BooleanField(source='patient.is_vip', read_only=True)
     patient_is_high_risk   = serializers.BooleanField(source='patient.is_high_risk', read_only=True)
     patient_risk_details   = serializers.CharField(source='patient.risk_details', read_only=True)
+
+
+class WaitlistEntrySerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WaitlistEntry
+        fields = '__all__'
+        read_only_fields = ['clinic']
+
+    def get_patient_name(self, obj):
+        return obj.patient.get_full_name() if obj.patient else None
+
+    def get_doctor_name(self, obj):
+        return obj.preferred_doctor.get_full_name() if obj.preferred_doctor else None

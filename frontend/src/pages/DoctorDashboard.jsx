@@ -3,6 +3,7 @@ import { authAPI, appointmentsAPI } from '../services/api';
 import { StatCard, Spinner, StatusBadge, Table } from '../components/UI';
 import { Calendar, Users, Clock, CheckCircle, FileText, Star, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import LiveQueue from '../components/LiveQueue';
 
 export default function DoctorDashboard() {
   const [stats, setStats] = useState(null);
@@ -36,8 +37,9 @@ export default function DoctorDashboard() {
         <StatCard label="Total Patients" value={stats?.total_patients} icon={Users} color="purple" />
       </div>
 
-      <div className="card">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Today's Appointments</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 card">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Today's Appointments</h2>
         {todayAppts.length === 0 ? (
           <p className="text-center py-8 text-gray-400 text-sm">No appointments scheduled for today</p>
         ) : (
@@ -70,6 +72,11 @@ export default function DoctorDashboard() {
             ))}
           </Table>
         )}
+        </div>
+
+        <div className="xl:col-span-1">
+          <LiveQueue title="Patients Waiting" />
+        </div>
       </div>
     </div>
   );
