@@ -108,6 +108,9 @@ export function EmptyState({ message = 'No data found', icon: Icon }) {
 export function StatusBadge({ status }) {
   const map = {
     Scheduled: 'badge-blue',
+    Confirmed: 'badge-purple',
+    'Checked-In': 'badge-teal',
+    'In-Progress': 'badge-orange',
     Completed: 'badge-green',
     Cancelled: 'badge-red',
     'No Show': 'badge-gray',

@@ -157,6 +157,22 @@ export const appointmentsAPI = {
   delete: (id) => api.delete(`/appointments/${id}/`),
 };
 
+export const treatmentTypesAPI = {
+  list: (params) => api.get('/appointments/treatment-types/', { params }),
+  get: (id) => api.get(`/appointments/treatment-types/${id}/`),
+  create: (data) => api.post('/appointments/treatment-types/', data),
+  update: (id, data) => api.put(`/appointments/treatment-types/${id}/`, data),
+  delete: (id) => api.delete(`/appointments/treatment-types/${id}/`),
+};
+
+export const blockTimesAPI = {
+  list: (params) => api.get('/appointments/block-times/', { params }),
+  get: (id) => api.get(`/appointments/block-times/${id}/`),
+  create: (data) => api.post('/appointments/block-times/', data),
+  update: (id, data) => api.put(`/appointments/block-times/${id}/`, data),
+  delete: (id) => api.delete(`/appointments/block-times/${id}/`),
+};
+
 // ── Records ───────────────────────────────────────────
 export const recordsAPI = {
   list: (params) => api.get('/records/', { params }),
