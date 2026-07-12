@@ -84,6 +84,20 @@ export const clinicsAPI = {
   getSubscriptionStatus: (clinicId) => api.get(`/clinics/${clinicId}/subscription/`),
 };
 
+export const clinicSettingsAPI = {
+  list: (params) => api.get('/clinics/settings/', { params }),
+  get: (id) => api.get(`/clinics/settings/${id}/`),
+  create: (data) => api.post('/clinics/settings/', data),
+  update: (id, data) => api.put(`/clinics/settings/${id}/`, data),
+  patch: (id, data) => api.patch(`/clinics/settings/${id}/`, data),
+};
+
+export const clinicHolidaysAPI = {
+  list: (params) => api.get('/clinics/holidays/', { params }),
+  create: (data) => api.post('/clinics/holidays/', data),
+  delete: (id) => api.delete(`/clinics/holidays/${id}/`),
+};
+
 // ── Clinic (public) ───────────────────────────────────
 export const clinicAPI = {
   getBySubdomain: (subdomain) => api.get('/clinics/info/', { params: { subdomain } }),
@@ -212,6 +226,15 @@ export const shiftsAPI = {
   update: (id, data) => api.put(`/shifts/${id}/`, data),
   patch:  (id, data) => api.patch(`/shifts/${id}/`, data),
   delete: (id)     => api.delete(`/shifts/${id}/`),
+};
+
+export const leavesAPI = {
+  list: (params) => api.get('/shifts/leaves/', { params }),
+  get: (id) => api.get(`/shifts/leaves/${id}/`),
+  create: (data) => api.post('/shifts/leaves/', data),
+  update: (id, data) => api.put(`/shifts/leaves/${id}/`, data),
+  patch: (id, data) => api.patch(`/shifts/leaves/${id}/`, data),
+  delete: (id) => api.delete(`/shifts/leaves/${id}/`),
 };
 
 

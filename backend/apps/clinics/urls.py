@@ -3,10 +3,13 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ClinicViewSet, PaymentViewSet,
     clinic_by_subdomain, create_payment_order,
-    verify_payment, get_subscription_status
+    verify_payment, get_subscription_status,
+    ClinicSettingsViewSet, ClinicHolidayViewSet
 )
 
 router = DefaultRouter()
+router.register(r'settings', ClinicSettingsViewSet, basename='clinic-settings')
+router.register(r'holidays', ClinicHolidayViewSet, basename='clinic-holidays')
 router.register(r'', ClinicViewSet, basename='clinic')
 
 # Separate router for payments

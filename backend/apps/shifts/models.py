@@ -38,3 +38,39 @@ class Shift(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.get_day_of_week_display()} ({self.start_time}-{self.end_time})"
+
+class Leave(models.Model):
+    class LeaveStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='leaves'
+    )
+    clinic = models.ForeignKey(
+        'clinics.Clinic',
+        on_delete=models.CASCADE,
+        related_name='leaves'
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=20,
+        choices=LeaveStatus.choices,
+        default=LeaveStatus.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'leaves'
+        verbose_name = 'Leave'
+        verbose_name_plural = 'Leaves'
+        ordering = ['-start_date']
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.start_date} to {self.end_date} ({self.status})"

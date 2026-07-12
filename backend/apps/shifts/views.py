@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
-from .models import Shift
-from .serializers import ShiftSerializer
+from .models import Shift, Leave
+from .serializers import ShiftSerializer, LeaveSerializer
 
 class ShiftViewSet(viewsets.ModelViewSet):
     serializer_class = ShiftSerializer
@@ -12,4 +12,14 @@ class ShiftViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Auto-assign the clinic from the current user
+        serializer.save(clinic=self.request.user.clinic)
+
+class LeaveViewSet(viewsets.ModelViewSet):
+    serializer_class = LeaveSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Leave.objects.filter(clinic=self.request.user.clinic).order_by('-start_date')
+
+    def perform_create(self, serializer):
         serializer.save(clinic=self.request.user.clinic)

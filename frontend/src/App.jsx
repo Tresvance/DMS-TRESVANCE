@@ -26,6 +26,7 @@ import PatientReports       from './pages/PatientReports';
 import Layout               from './components/Layout';
 import Settings             from './pages/Settings';
 import AuditLogs            from './pages/AuditLogs';
+import ClinicSettings       from './pages/ClinicSettings';
 
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -79,6 +80,7 @@ function AppRoutes() {
         <Route path="clinic/reports"   element={<ProtectedRoute allowedRoles={['ADMIN']}><PatientReports /></ProtectedRoute>} />
         <Route path="clinic/payments"  element={<ProtectedRoute allowedRoles={['ADMIN']}><PaymentHistory /></ProtectedRoute>} />
         <Route path="clinic/audit-logs" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuditLogs /></ProtectedRoute>} />
+        <Route path="clinic/settings"  element={<ProtectedRoute allowedRoles={['ADMIN']}><ClinicSettings /></ProtectedRoute>} />
 
 
         {/* ── Doctor ──────────────────────────────────── */}

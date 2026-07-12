@@ -8,10 +8,11 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 
-from .models import Clinic, Payment
+from .models import Clinic, Payment, ClinicSettings, ClinicHoliday
 from .serializers import (
     ClinicSerializer, ClinicPublicSerializer,
-    PaymentSerializer, CreateOrderSerializer, VerifyPaymentSerializer
+    PaymentSerializer, CreateOrderSerializer, VerifyPaymentSerializer,
+    ClinicSettingsSerializer, ClinicHolidaySerializer
 )
 from apps.users.permissions import IsSuperAdmin
 from . import razorpay_utils
@@ -272,3 +273,30 @@ def get_subscription_status(request, clinic_id):
         'is_subscription_active': clinic.is_subscription_active,
         'days_remaining': clinic.days_remaining,
     })
+
+class ClinicSettingsViewSet(viewsets.ModelViewSet):
+    serializer_class = ClinicSettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPER_ADMIN':
+            return ClinicSettings.objects.all()
+        return ClinicSettings.objects.filter(clinic_id=user.clinic_id)
+
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)
+
+
+class ClinicHolidayViewSet(viewsets.ModelViewSet):
+    serializer_class = ClinicHolidaySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'SUPER_ADMIN':
+            return ClinicHoliday.objects.all().order_by('-date')
+        return ClinicHoliday.objects.filter(clinic_id=user.clinic_id).order_by('-date')
+
+    def perform_create(self, serializer):
+        serializer.save(clinic=self.request.user.clinic)

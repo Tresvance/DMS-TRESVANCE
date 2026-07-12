@@ -21,7 +21,8 @@ const INITIAL_FORM = {
   patient: '', doctor: '', treatment_type: '', appointment_date: '', 
   appointment_time: '09:00', end_time: '09:30',
   reason: '', status: 'Scheduled', notes: '',
-  recurrence_type: 'none', recurrence_count: 1
+  recurrence_type: 'none', recurrence_count: 1,
+  apply_buffer: true
 };
 
 // ── Helpers ───────────────────────────────────────────
@@ -137,7 +138,8 @@ export default function Appointments() {
       end_time: a.end_time?.slice(0, 5) || '09:30',
       reason: a.reason,
       status: a.status, notes: a.notes || '',
-      recurrence_type: 'none', recurrence_count: 1
+      recurrence_type: 'none', recurrence_count: 1,
+      apply_buffer: true
     });
     setEditId(a.id); setModalOpen(true);
   };
@@ -390,6 +392,19 @@ export default function Appointments() {
                 <option value="No Show">No Show</option>
               </select>
             </FormField>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="apply_buffer"
+              checked={form.apply_buffer} 
+              onChange={e => setForm(f => ({ ...f, apply_buffer: e.target.checked }))} 
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4" 
+            />
+            <label htmlFor="apply_buffer" className="text-sm font-medium text-blue-800 cursor-pointer">
+              Apply clinic buffer time to prevent conflict overlap
+            </label>
           </div>
 
           {!editId && (

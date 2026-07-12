@@ -45,7 +45,8 @@ const navConfig = {
     { divider: true },
     { to: '/support/tickets',      icon: Ticket,          label: 'Support Tickets' },
     { divider: true },
-    { to: '/settings',             icon: SettingsIcon,    label: 'Settings' },
+    { to: '/clinic/settings',      icon: SettingsIcon,    label: 'Clinic Settings' },
+    { to: '/settings',             icon: SettingsIcon,    label: 'Profile Settings' },
   ],
   DENTIST: [
     { to: '/doctor/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },

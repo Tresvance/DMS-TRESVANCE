@@ -10,6 +10,8 @@ import uuid
 
 from .models import Appointment, TreatmentType, BlockTime
 from .serializers import AppointmentSerializer, TreatmentTypeSerializer, BlockTimeSerializer
+from apps.clinics.models import ClinicSettings, ClinicHoliday
+from apps.shifts.models import Leave
 
 
 class TreatmentTypeViewSet(viewsets.ModelViewSet):
@@ -77,47 +79,100 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         return qs.select_related('clinic', 'patient', 'doctor', 'treatment_type')
 
-    def check_conflicts(self, doctor_id, appt_date, start_time, end_time, exclude_id=None):
+    def check_conflicts(self, doctor_id, appt_date, start_time, end_time, clinic, exclude_id=None, apply_buffer=True):
         if not end_time:
-            return  # Can't reliably check conflicts without end time
+            return
+
+        if ClinicHoliday.objects.filter(clinic=clinic, date=appt_date).exists():
+            raise ValidationError("Clinic is closed on this date (Holiday).")
+
+        if Leave.objects.filter(clinic=clinic, user_id=doctor_id, status='APPROVED', start_date__lte=appt_date, end_date__gte=appt_date).exists():
+            raise ValidationError("Doctor is on leave on this date.")
+
+        settings = getattr(clinic, 'settings', None)
+        buffer_delta = timedelta(minutes=0)
+
+        if settings and settings.operating_hours:
+            day_str = appt_date.strftime("%a").upper()
+            day_settings = settings.operating_hours.get(day_str)
+            if day_settings:
+                if day_settings.get("closed"):
+                    raise ValidationError(f"Clinic is closed on {day_str}.")
+                try:
+                    open_time = datetime.strptime(day_settings.get("start", "00:00"), "%H:%M").time()
+                    close_time = datetime.strptime(day_settings.get("end", "23:59"), "%H:%M").time()
+                    if start_time < open_time or end_time > close_time:
+                        raise ValidationError(f"Appointment is outside operating hours ({open_time} - {close_time}).")
+                except ValueError:
+                    pass
+            
+            if apply_buffer:
+                buffer_delta = timedelta(minutes=settings.buffer_time_minutes)
+
+        if settings and settings.max_appointments_per_day_per_dentist > 0:
+            count = Appointment.objects.filter(
+                doctor_id=doctor_id,
+                appointment_date=appt_date,
+                status__in=['Scheduled', 'Confirmed', 'Checked-In', 'In-Progress']
+            ).count()
+            if count >= settings.max_appointments_per_day_per_dentist:
+                raise ValidationError(f"Doctor has reached maximum appointments ({settings.max_appointments_per_day_per_dentist}) for the day.")
+
+        start_dt = datetime.combine(appt_date, start_time)
+        end_dt = datetime.combine(appt_date, end_time)
         
-        # Check overlapping appointments
-        overlapping_appts = Appointment.objects.filter(
+        existing_appts = Appointment.objects.filter(
             doctor_id=doctor_id,
             appointment_date=appt_date,
-            appointment_time__lt=end_time,
-            end_time__gt=start_time,
             status__in=['Scheduled', 'Confirmed', 'Checked-In', 'In-Progress']
         )
         if exclude_id:
-            overlapping_appts = overlapping_appts.exclude(id=exclude_id)
+            existing_appts = existing_appts.exclude(id=exclude_id)
             
-        if overlapping_appts.exists():
-            raise ValidationError("Doctor has another appointment during this time.")
+        for appt in existing_appts:
+            appt_start = datetime.combine(appt_date, appt.appointment_time)
+            appt_end = datetime.combine(appt_date, appt.end_time)
+            
+            if apply_buffer:
+                appt_start = appt_start - buffer_delta
+                appt_end = appt_end + buffer_delta
+                
+            if start_dt < appt_end and end_dt > appt_start:
+                raise ValidationError("Doctor has another appointment or buffer conflict during this time.")
 
     def perform_create(self, serializer):
         user = self.request.user
         clinic = user.clinic if user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic')
         
-        # Basic conflict check
         doctor = serializer.validated_data.get('doctor')
         appt_date = serializer.validated_data.get('appointment_date')
         start_time = serializer.validated_data.get('appointment_time')
         end_time = serializer.validated_data.get('end_time')
         
+        apply_buffer = self.request.data.get('apply_buffer', True)
+        if isinstance(apply_buffer, str):
+            apply_buffer = apply_buffer.lower() == 'true'
+
         if doctor and appt_date and start_time and end_time:
-            self.check_conflicts(doctor.id, appt_date, start_time, end_time)
+            self.check_conflicts(doctor.id, appt_date, start_time, end_time, clinic, apply_buffer=apply_buffer)
             
         serializer.save(clinic=clinic)
 
     def perform_update(self, serializer):
+        user = self.request.user
+        clinic = user.clinic if user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic', self.get_object().clinic)
+
         doctor = serializer.validated_data.get('doctor', self.get_object().doctor)
         appt_date = serializer.validated_data.get('appointment_date', self.get_object().appointment_date)
         start_time = serializer.validated_data.get('appointment_time', self.get_object().appointment_time)
         end_time = serializer.validated_data.get('end_time', self.get_object().end_time)
         
+        apply_buffer = self.request.data.get('apply_buffer', True)
+        if isinstance(apply_buffer, str):
+            apply_buffer = apply_buffer.lower() == 'true'
+
         if doctor and appt_date and start_time and end_time:
-            self.check_conflicts(doctor.id, appt_date, start_time, end_time, exclude_id=self.get_object().id)
+            self.check_conflicts(doctor.id, appt_date, start_time, end_time, clinic, exclude_id=self.get_object().id, apply_buffer=apply_buffer)
             
         serializer.save()
 

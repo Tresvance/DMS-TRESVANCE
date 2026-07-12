@@ -191,3 +191,57 @@ class Payment(models.Model):
 
     def __str__(self):
         return f'{self.clinic.clinic_name} - ₹{self.amount} ({self.status})'
+
+class ClinicSettings(models.Model):
+    clinic = models.OneToOneField(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name='settings'
+    )
+    operating_hours = models.JSONField(
+        default=dict,
+        help_text='JSON containing daily operating hours. e.g. {"MON": {"start": "09:00", "end": "17:00", "closed": false}}'
+    )
+    appointment_slot_duration = models.PositiveIntegerField(
+        default=30,
+        help_text='Default slot duration in minutes'
+    )
+    buffer_time_minutes = models.PositiveIntegerField(
+        default=5,
+        help_text='Default buffer time between appointments in minutes'
+    )
+    max_appointments_per_day_per_dentist = models.PositiveIntegerField(
+        default=20,
+        help_text='Maximum appointments a dentist can have per day'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'clinic_settings'
+        verbose_name = 'Clinic Settings'
+        verbose_name_plural = 'Clinic Settings'
+
+    def __str__(self):
+        return f'{self.clinic.clinic_name} Settings'
+
+
+class ClinicHoliday(models.Model):
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name='holidays'
+    )
+    date = models.DateField()
+    reason = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'clinic_holidays'
+        verbose_name = 'Clinic Holiday'
+        verbose_name_plural = 'Clinic Holidays'
+        ordering = ['date']
+        unique_together = ('clinic', 'date')
+
+    def __str__(self):
+        return f'{self.clinic.clinic_name} - {self.date}'

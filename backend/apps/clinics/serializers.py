@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Clinic, Payment
+from .models import Clinic, Payment, ClinicSettings, ClinicHoliday
 
 
 class ClinicPublicSerializer(serializers.ModelSerializer):
@@ -98,3 +98,19 @@ class VerifyPaymentSerializer(serializers.Serializer):
     razorpay_order_id = serializers.CharField()
     razorpay_payment_id = serializers.CharField()
     razorpay_signature = serializers.CharField()
+
+class ClinicSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClinicSettings
+        fields = [
+            'id', 'clinic', 'operating_hours', 'appointment_slot_duration',
+            'buffer_time_minutes', 'max_appointments_per_day_per_dentist',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['clinic', 'created_at', 'updated_at']
+
+class ClinicHolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClinicHoliday
+        fields = ['id', 'clinic', 'date', 'reason', 'created_at']
+        read_only_fields = ['clinic', 'created_at']
