@@ -49,12 +49,23 @@ export default function AddPatient() {
       toast.error('Please fill required fields in Basic Info'); return;
     }
     setLoading(true);
+    
+    // Clean payload
+    const payload = { ...form };
+    if (!payload.pregnancy_due_date) {
+      payload.pregnancy_due_date = null; // Fix validation error for empty dates
+    }
+    if (payload.gender === 'Male' || payload.gender === 'Other') {
+      payload.is_pregnant = false;
+      payload.pregnancy_due_date = null;
+    }
+
     try {
       if (isEdit) {
-        await patientsAPI.update(id, form);
+        await patientsAPI.update(id, payload);
         toast.success('Patient updated!');
       } else {
-        const { data } = await patientsAPI.create(form);
+        const { data } = await patientsAPI.create(payload);
         toast.success('Patient registered!');
         navigate(`/patients/${data.id}/edit`); // Redirect to edit mode so they can add clinical lists
         return;

@@ -5,7 +5,7 @@ import {
   PageHeader, Table, Spinner, EmptyState, ConfirmDialog,
   StatusBadge, Modal, FormField, SearchBar
 } from '../components/UI';
-import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Loader2, Star, AlertCircle, List, CheckCircle, Bell, XCircle, UserCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar as CalendarIcon, Loader2, Star, AlertCircle, List, CheckCircle, Bell, XCircle, UserCheck, Users, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -86,10 +86,12 @@ const TimePicker = ({ value, onChange }) => {
 
 export default function Appointments() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('appointments'); // appointments, waitlist
+  const [activeTab, setActiveTab] = useState('appointments'); // appointments, waitlist, queue
   
   const [appointments, setAppointments] = useState([]);
   const [waitlist, setWaitlist] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [waitlistAnalytics, setWaitlistAnalytics] = useState(null);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [treatmentTypes, setTreatmentTypes] = useState([]);
@@ -120,18 +122,22 @@ export default function Appointments() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, waitRes, patRes, docRes, typeRes] = await Promise.all([
+      const [apptRes, waitRes, patRes, docRes, typeRes, queueRes, analyticsRes] = await Promise.all([
         appointmentsAPI.list({ search }),
         waitlistAPI.list({ search }),
         patientsAPI.list({ page_size: 200 }),
         usersAPI.list({ role: 'DENTIST' }),
-        treatmentTypesAPI.list()
+        treatmentTypesAPI.list(),
+        appointmentsAPI.getQueue(),
+        waitlistAPI.getAnalytics().catch(() => ({ data: null }))
       ]);
       setAppointments(apptRes.data.results || apptRes.data);
       setWaitlist(waitRes.data.results || waitRes.data);
       setPatients(patRes.data.results || patRes.data);
       setDoctors(docRes.data.results || docRes.data);
       setTreatmentTypes(typeRes.data.results || typeRes.data);
+      setQueue(queueRes.data.results || queueRes.data);
+      if (analyticsRes?.data) setWaitlistAnalytics(analyticsRes.data);
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
   }, [search]);
@@ -178,8 +184,18 @@ export default function Appointments() {
       if (!editId && form.recurrence_type !== 'none') {
         payload.recurrence = { type: form.recurrence_type, count: form.recurrence_count };
       }
-      if (editId) { await appointmentsAPI.update(editId, payload); toast.success('Appointment updated'); }
-      else { await appointmentsAPI.create(payload); toast.success('Appointment booked'); }
+      payload.auto_waitlist = true;
+      if (editId) { 
+        await appointmentsAPI.update(editId, payload); 
+        toast.success('Appointment updated'); 
+      } else { 
+        const res = await appointmentsAPI.create(payload); 
+        if (res.data?.detail) {
+          toast.success(res.data.detail);
+        } else {
+          toast.success('Appointment booked'); 
+        }
+      }
       setModalOpen(false); load();
     } catch (err) {
       toast.error(err.response?.data?.detail || (err.response?.data && Object.values(err.response.data)[0]) || 'Save failed');
@@ -310,17 +326,26 @@ export default function Appointments() {
     if (!canEdit) return;
     const a = event.resource;
     const payload = {
-      ...a,
+      patient: a.patient,
+      doctor: a.doctor,
+      treatment_type: a.treatment_type || '',
+      reason: a.reason,
+      status: a.status,
+      notes: a.notes || '',
       appointment_date: moment(start).format('YYYY-MM-DD'),
       appointment_time: moment(start).format('HH:mm'),
-      end_time: moment(end).format('HH:mm')
+      end_time: moment(end).format('HH:mm'),
+      apply_buffer: true
     };
     try {
       await appointmentsAPI.update(a.id, payload);
       toast.success('Appointment rescheduled');
       load();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Conflict or error during reschedule');
+      const errorMessage = err.response?.data?.detail || 
+                           (err.response?.data && Object.values(err.response.data)[0]) || 
+                           'Conflict or error during reschedule';
+      toast.error(errorMessage);
       load();
     }
   };
@@ -379,6 +404,15 @@ export default function Appointments() {
           <div className="flex items-center gap-2">
             <List className="w-4 h-4" /> Waitlist
             {waitlist.length > 0 && <span className="ml-1 bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full text-xs">{waitlist.length}</span>}
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('queue')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'queue' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" /> Live Queue
+            {queue.length > 0 && <span className="ml-1 bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full text-xs">{queue.length}</span>}
           </div>
         </button>
       </div>
@@ -459,56 +493,102 @@ export default function Appointments() {
               </div>
             )}
           </>
+        ) : activeTab === 'waitlist' ? (
+          <div className="flex-1 overflow-auto flex flex-col">
+            {waitlistAnalytics && (
+              <div className="bg-gray-50 p-4 border-b border-gray-200 grid grid-cols-4 gap-4">
+                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Total Entries</div>
+                  <div className="text-2xl font-bold text-gray-900">{waitlistAnalytics.total_entries}</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Converted</div>
+                  <div className="text-2xl font-bold text-green-600">{waitlistAnalytics.converted_entries}</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Conversion Rate</div>
+                  <div className="text-2xl font-bold text-blue-600">{waitlistAnalytics.conversion_rate_percent}%</div>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">By Priority</div>
+                  <div className="flex gap-2 mt-1 text-xs">
+                    <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">E: {waitlistAnalytics.by_priority.EMERGENCY}</span>
+                    <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">V: {waitlistAnalytics.by_priority.VIP}</span>
+                    <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-medium">S: {waitlistAnalytics.by_priority.STANDARD}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {waitlist.length === 0 ? (
+              <div className="p-8">
+                <EmptyState message="Waitlist is empty" icon={List} />
+              </div>
+            ) : (
+              <div className="flex-1 overflow-auto">
+                <Table headers={['Patient', 'Priority', 'Pref. Date', 'Pref. Time', 'Status', 'Actions']}>
+                  {waitlist.map(w => (
+                    <tr key={w.id} className="hover:bg-gray-50">
+                      <td className="table-cell font-medium">{w.patient_name}</td>
+                      <td className="table-cell">
+                        <span className={`badge ${
+                          w.priority === 'EMERGENCY' ? 'bg-red-100 text-red-700 font-bold' :
+                          w.priority === 'VIP' ? 'bg-amber-100 text-amber-700 font-bold' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {w.priority}
+                        </span>
+                      </td>
+                      <td className="table-cell">{w.preferred_date ? new Date(w.preferred_date).toLocaleDateString() : 'Any'}</td>
+                      <td className="table-cell text-gray-600">{w.preferred_time_range || 'Any'}</td>
+                      <td className="table-cell">
+                        <span className={`badge ${
+                          w.status === 'WAITING' ? 'bg-yellow-100 text-yellow-700' :
+                          w.status === 'NOTIFIED' ? 'bg-blue-100 text-blue-700' :
+                          w.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {w.status}
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex gap-2">
+                          {w.status === 'WAITING' && (
+                            <button onClick={() => changeWaitlistStatus(w.id, 'NOTIFIED')} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg" title="Mark Notified">
+                              <Bell className="w-4 h-4" />
+                            </button>
+                          )}
+                          {(w.status === 'WAITING' || w.status === 'NOTIFIED') && (
+                            <button onClick={() => changeWaitlistStatus(w.id, 'CONFIRMED')} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg" title="Mark Confirmed">
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button onClick={() => openEditWaitlist(w)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setWaitlistDeleteTarget(w)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </Table>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="flex-1 overflow-auto">
-            {waitlist.length === 0 ? (
-              <EmptyState message="Waitlist is empty" icon={List} />
+            {queue.length === 0 ? (
+              <EmptyState message="No patients currently checked in for the queue" icon={Users} />
             ) : (
-              <Table headers={['Patient', 'Priority', 'Pref. Date', 'Pref. Time', 'Status', 'Actions']}>
-                {waitlist.map(w => (
-                  <tr key={w.id} className="hover:bg-gray-50">
-                    <td className="table-cell font-medium">{w.patient_name}</td>
-                    <td className="table-cell">
-                      <span className={`badge ${
-                        w.priority === 'EMERGENCY' ? 'bg-red-100 text-red-700 font-bold' :
-                        w.priority === 'VIP' ? 'bg-amber-100 text-amber-700 font-bold' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {w.priority}
-                      </span>
-                    </td>
-                    <td className="table-cell">{w.preferred_date ? new Date(w.preferred_date).toLocaleDateString() : 'Any'}</td>
-                    <td className="table-cell text-gray-600">{w.preferred_time_range || 'Any'}</td>
-                    <td className="table-cell">
-                      <span className={`badge ${
-                        w.status === 'WAITING' ? 'bg-yellow-100 text-yellow-700' :
-                        w.status === 'NOTIFIED' ? 'bg-blue-100 text-blue-700' :
-                        w.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {w.status}
-                      </span>
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex gap-2">
-                        {w.status === 'WAITING' && (
-                          <button onClick={() => changeWaitlistStatus(w.id, 'NOTIFIED')} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg" title="Mark Notified">
-                            <Bell className="w-4 h-4" />
-                          </button>
-                        )}
-                        {(w.status === 'WAITING' || w.status === 'NOTIFIED') && (
-                          <button onClick={() => changeWaitlistStatus(w.id, 'CONFIRMED')} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg" title="Mark Confirmed">
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button onClick={() => openEditWaitlist(w)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setWaitlistDeleteTarget(w)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+              <Table headers={['Position', 'Patient', 'DENTIST', 'Time of Arrival', 'Status']}>
+                {queue.map((q, idx) => (
+                  <tr key={q.id} className="hover:bg-gray-50">
+                    <td className="table-cell font-bold text-gray-500">#{idx + 1}</td>
+                    <td className="table-cell font-semibold text-gray-900">{q.patient_name}</td>
+                    <td className="table-cell">{q.doctor_name}</td>
+                    <td className="table-cell">{q.arrival_time ? new Date(q.arrival_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-'}</td>
+                    <td className="table-cell"><StatusBadge status={q.status} /></td>
                   </tr>
                 ))}
               </Table>

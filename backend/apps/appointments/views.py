@@ -142,6 +142,30 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             if start_dt < appt_end and end_dt > appt_start:
                 raise ValidationError("Doctor has another appointment or buffer conflict during this time.")
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            err_msg = str(e).lower()
+            if request.data.get('auto_waitlist') and ("conflict" in err_msg or "maximum" in err_msg):
+                clinic = request.user.clinic if request.user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic')
+                WaitlistEntry.objects.create(
+                    clinic=clinic,
+                    patient=serializer.validated_data.get('patient'),
+                    preferred_date=serializer.validated_data.get('appointment_date'),
+                    preferred_doctor=serializer.validated_data.get('doctor'),
+                    notes="Automatically added due to schedule conflict."
+                )
+                return Response(
+                    {"detail": "Time slot is full. Patient has been automatically added to the waitlist for this date."},
+                    status=status.HTTP_201_CREATED
+                )
+            raise e
+
     def perform_create(self, serializer):
         user = self.request.user
         clinic = user.clinic if user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic')
@@ -261,6 +285,23 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def queue(self, request):
+        user = request.user
+        clinic = user.clinic if user.role != 'SUPER_ADMIN' else None
+        
+        queryset = Appointment.objects.filter(
+            status=Appointment.Status.CHECKED_IN,
+            appointment_date=timezone.now().date()
+        )
+        if clinic:
+            queryset = queryset.filter(clinic=clinic)
+            
+        queryset = queryset.order_by('arrival_time')
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class WaitlistEntryViewSet(viewsets.ModelViewSet):
     serializer_class = WaitlistEntrySerializer
@@ -280,3 +321,28 @@ class WaitlistEntryViewSet(viewsets.ModelViewSet):
         user = self.request.user
         clinic = user.clinic if user.role != 'SUPER_ADMIN' else serializer.validated_data.get('clinic')
         serializer.save(clinic=clinic)
+
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        qs = self.get_queryset()
+        total_entries = qs.count()
+        converted_entries = qs.filter(converted_to_appointment__isnull=False).count()
+        
+        emergency_count = qs.filter(priority='EMERGENCY').count()
+        vip_count = qs.filter(priority='VIP').count()
+        standard_count = qs.filter(priority='STANDARD').count()
+        
+        conversion_rate = 0
+        if total_entries > 0:
+            conversion_rate = round((converted_entries / total_entries) * 100, 2)
+            
+        return Response({
+            'total_entries': total_entries,
+            'converted_entries': converted_entries,
+            'conversion_rate_percent': conversion_rate,
+            'by_priority': {
+                'EMERGENCY': emergency_count,
+                'VIP': vip_count,
+                'STANDARD': standard_count
+            }
+        })

@@ -92,6 +92,9 @@ class WaitlistEntry(models.Model):
     priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.STANDARD)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
     notes = models.TextField(blank=True)
+    converted_to_appointment = models.ForeignKey(
+        'Appointment', on_delete=models.SET_NULL, null=True, blank=True, related_name='from_waitlist'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

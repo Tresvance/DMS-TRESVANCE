@@ -49,6 +49,19 @@ class PatientSerializer(serializers.ModelSerializer):
     def get_clinic_name(self, obj):
         return obj.clinic.clinic_name if obj.clinic else None
 
+    def to_internal_value(self, data):
+        # Convert empty strings to None for optional date fields to prevent DRF "wrong format" errors
+        date_fields = ['pregnancy_due_date', 'date_of_birth']
+        if any(data.get(field) == '' for field in date_fields):
+            if hasattr(data, 'copy'):
+                data = data.copy()
+            else:
+                data = dict(data)
+            for field in date_fields:
+                if data.get(field) == '':
+                    data[field] = None
+        return super().to_internal_value(data)
+
 
 class PatientListSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
