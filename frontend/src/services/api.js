@@ -98,10 +98,6 @@ export const clinicHolidaysAPI = {
   delete: (id) => api.delete(`/clinics/holidays/${id}/`),
 };
 
-// ── Clinic (public) ───────────────────────────────────
-export const clinicAPI = {
-  getBySubdomain: (subdomain) => api.get('/clinics/info/', { params: { subdomain } }),
-};
 
 // ── Payments ──────────────────────────────────────────
 export const paymentsAPI = {

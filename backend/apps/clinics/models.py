@@ -4,22 +4,6 @@ from datetime import timedelta
 import re
 
 
-def generate_subdomain(clinic_name):
-    """
-    Generate subdomain code from clinic name.
-    'Lake Dental Clinic' → 'lak'
-    'Bright Smile'       → 'bri'
-    'ABC Dental'         → 'abc'
-    """
-    # Remove special chars, lowercase, take first word or first 3 chars
-    clean = re.sub(r'[^a-zA-Z0-9\s]', '', clinic_name).strip().lower()
-    words = clean.split()
-    if not words:
-        return 'clinic'
-    code = words[0][:6]  # first word, max 6 chars
-    return code
-
-
 class Clinic(models.Model):
     class SubscriptionStatus(models.TextChoices):
         TRIAL = 'TRIAL', 'Trial'
@@ -29,10 +13,6 @@ class Clinic(models.Model):
         SUSPENDED = 'SUSPENDED', 'Suspended'
 
     clinic_name         = models.CharField(max_length=200)
-    clinic_code         = models.CharField(max_length=20, unique=True, blank=True,
-                            help_text='Short code used for subdomain e.g. LAK')
-    subdomain           = models.CharField(max_length=100, unique=True, blank=True,
-                            help_text='Full subdomain e.g. lak.tresvance.com')
     registration_number = models.CharField(max_length=100, unique=True)
     address             = models.TextField()
     phone               = models.CharField(max_length=20)
@@ -86,19 +66,6 @@ class Clinic(models.Model):
         ordering = ['clinic_name']
 
     def save(self, *args, **kwargs):
-        # Auto-generate clinic_code and subdomain if not set
-        if not self.clinic_code:
-            base_code = generate_subdomain(self.clinic_name)
-            code      = base_code
-            counter   = 1
-            # Ensure uniqueness
-            while Clinic.objects.filter(clinic_code=code).exclude(pk=self.pk).exists():
-                code = f'{base_code}{counter}'
-                counter += 1
-            self.clinic_code = code
-
-        # Always sync subdomain from clinic_code
-        self.subdomain = f'{self.clinic_code}.tresvance.com'
 
         # Set trial dates if on trial and not already set
         if self.is_trial and not self.trial_start_date:
@@ -137,7 +104,7 @@ class Clinic(models.Model):
         return 0
 
     def __str__(self):
-        return f'{self.clinic_name} ({self.subdomain})'
+        return self.clinic_name
 
 
 class Payment(models.Model):
