@@ -13,7 +13,7 @@ class ClinicAdmin(admin.ModelAdmin):
     search_fields = ['clinic_name', 'registration_number', 'email']
     fieldsets = (
         ('Basic Info', {
-            'fields': ('clinic_name', 'clinic_code', 'registration_number', 'address', 'phone', 'email')
+            'fields': ('clinic_name', 'registration_number', 'address', 'phone', 'email')
         }),
         ('Subscription', {
             'fields': (

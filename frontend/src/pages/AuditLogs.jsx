@@ -16,7 +16,7 @@ export default function AuditLogs() {
     try {
       setLoading(true);
       const res = await auditLogsAPI.list();
-      setLogs(res.data);
+      setLogs(res.data.results || res.data);
     } catch (err) {
       toast.error('Failed to load audit logs');
     } finally {

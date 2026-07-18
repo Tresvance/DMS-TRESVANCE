@@ -6,7 +6,7 @@ class ClinicPublicSerializer(serializers.ModelSerializer):
     """Public serializer for login page - limited fields"""
     class Meta:
         model = Clinic
-        fields = ['id', 'clinic_name', 'clinic_code', 'subdomain']
+        fields = ['id', 'clinic_name']
 
 
 class ClinicSerializer(serializers.ModelSerializer):
@@ -18,7 +18,7 @@ class ClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Clinic
         fields = [
-            'id', 'clinic_name', 'clinic_code', 'subdomain',
+            'id', 'clinic_name',
             'registration_number', 'address', 'phone', 'email',
             'created_by', 'created_by_name',
             'is_active', 'staff_count', 'created_at',
@@ -28,7 +28,7 @@ class ClinicSerializer(serializers.ModelSerializer):
             'subscription_status', 'subscription_end_date',
             'is_subscription_active', 'days_remaining',
         ]
-        read_only_fields = ['id', 'created_at', 'subdomain', 'created_by',
+        read_only_fields = ['id', 'created_at', 'created_by',
                            'trial_start_date', 'trial_end_date',
                            'subscription_end_date']
 
@@ -44,30 +44,7 @@ class ClinicSerializer(serializers.ModelSerializer):
     def get_days_remaining(self, obj):
         return obj.days_remaining
 
-    def validate_clinic_code(self, value):
-        # Sanitise: lowercase, only letters and numbers
-        import re
-        value = re.sub(r'[^a-z0-9]', '', value.lower().strip())
-        if not value:
-            raise serializers.ValidationError('Clinic code must contain letters or numbers.')
-        if len(value) < 2:
-            raise serializers.ValidationError('Clinic code must be at least 2 characters.')
-        if len(value) > 20:
-            raise serializers.ValidationError('Clinic code must be 20 characters or less.')
-        return value
 
-    def validate(self, attrs):
-        # Check subdomain uniqueness on update
-        clinic_code = attrs.get('clinic_code', '')
-        if clinic_code:
-            subdomain = f'{clinic_code}.tresvance.com'
-            qs = Clinic.objects.filter(subdomain=subdomain)
-            if self.instance:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise serializers.ValidationError(
-                    {'clinic_code': f'Subdomain {subdomain} is already taken.'})
-        return attrs
 
 
 class PaymentSerializer(serializers.ModelSerializer):
