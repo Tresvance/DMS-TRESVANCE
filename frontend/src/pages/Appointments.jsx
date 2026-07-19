@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { appointmentsAPI, patientsAPI, usersAPI, treatmentTypesAPI, waitlistAPI } from '../services/api';
+import { appointmentsAPI, patientsAPI, usersAPI, treatmentTypesAPI, waitlistAPI, clinicSettingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   PageHeader, Table, Spinner, EmptyState, ConfirmDialog,
@@ -96,6 +96,9 @@ export default function Appointments() {
   const [doctors, setDoctors] = useState([]);
   const [treatmentTypes, setTreatmentTypes] = useState([]);
   
+  const [minTime, setMinTime] = useState(new Date(2000, 0, 1, 8, 0));
+  const [maxTime, setMaxTime] = useState(new Date(2000, 0, 1, 20, 0));
+  
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
@@ -122,14 +125,15 @@ export default function Appointments() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, waitRes, patRes, docRes, typeRes, queueRes, analyticsRes] = await Promise.all([
+      const [apptRes, waitRes, patRes, docRes, typeRes, queueRes, analyticsRes, settingsRes] = await Promise.all([
         appointmentsAPI.list({ search }),
         waitlistAPI.list({ search }),
         patientsAPI.list({ page_size: 200 }),
         usersAPI.list({ role: 'DENTIST' }),
         treatmentTypesAPI.list(),
         appointmentsAPI.getQueue(),
-        waitlistAPI.getAnalytics().catch(() => ({ data: null }))
+        waitlistAPI.getAnalytics().catch(() => ({ data: null })),
+        clinicSettingsAPI.list().catch(() => ({ data: [] }))
       ]);
       setAppointments(apptRes.data.results || apptRes.data);
       setWaitlist(waitRes.data.results || waitRes.data);
@@ -138,6 +142,36 @@ export default function Appointments() {
       setTreatmentTypes(typeRes.data.results || typeRes.data);
       setQueue(queueRes.data.results || queueRes.data);
       if (analyticsRes?.data) setWaitlistAnalytics(analyticsRes.data);
+
+      const settingsData = settingsRes?.data;
+      if (settingsData && settingsData.length > 0) {
+        const operatingHours = settingsData[0].operating_hours;
+        if (operatingHours) {
+          let earliestHour = 24, earliestMinute = 0;
+          let latestHour = 0, latestMinute = 0;
+
+          Object.values(operatingHours).forEach(day => {
+            if (!day.closed && day.start && day.end) {
+              const [startH, startM] = day.start.split(':').map(Number);
+              const [endH, endM] = day.end.split(':').map(Number);
+              
+              if (startH < earliestHour || (startH === earliestHour && startM < earliestMinute)) {
+                earliestHour = startH;
+                earliestMinute = startM;
+              }
+              if (endH > latestHour || (endH === latestHour && endM > latestMinute)) {
+                latestHour = endH;
+                latestMinute = endM;
+              }
+            }
+          });
+
+          if (earliestHour < 24) {
+            setMinTime(new Date(2000, 0, 1, earliestHour, earliestMinute));
+            setMaxTime(new Date(2000, 0, 1, latestHour, latestMinute));
+          }
+        }
+      }
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
   }, [search]);
@@ -489,6 +523,8 @@ export default function Appointments() {
                   views={['month', 'week', 'day']}
                   step={15}
                   timeslots={2}
+                  min={minTime}
+                  max={maxTime}
                 />
               </div>
             )}
